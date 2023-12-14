@@ -295,7 +295,7 @@ if __name__ == '__main__':
     df.rename(columns={"job_title": 'Role', 'contract_type': 'Employment_Type', 'url': 'job_url'},inplace=True)
     df['scrap_date'] = str(date.today())
     final_data = pd.concat([final_data,df],axis=0,ignore_index=True)
-    print('saving keyword file')
+    print('saving listing file')
     df.to_csv(r"/home/ec2-user/scrape_data/listing_page_data/listing_page_all_{}.csv".format(str(date.today())),index=False)
 
 saving_listing_df(final_data)
@@ -739,6 +739,7 @@ def new_job_df(x,final_data):
     specific_files = new_job_data_list(x)
     for file in specific_files[:-1]:
         #load from bucket
+        s3 = boto3.resource("s3")
         obj = s3.Bucket('nhs-dataset').Object(file).get()
         dd = pd.read_csv(obj['Body'],index_col=0)
         try:
