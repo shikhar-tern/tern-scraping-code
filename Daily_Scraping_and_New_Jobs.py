@@ -258,12 +258,12 @@ def saving_listing_df(final_data):
 
 
 def listing_push_to_s3(x,y,z):
-    print(f'Pushing {y}_{str(date.today())} to s3 bucket in {x}')
+    print(f'Pushing {y}_{z} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
     df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',
-                                         Key = f'{x}/{y}_{z}.csv')
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',Key = f'{x}/{y}_{z}.csv')
+    print(f'{y}_{z} pushed to bucket in {x}')
 
 
 # In[10]:
@@ -723,6 +723,12 @@ def new_job_data_list(x):
     s3_bucket = s3.Bucket("nhs-dataset")
     dir = x
     files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)
+    
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    return flat_list
 
 
 # In[ ]:
@@ -758,8 +764,8 @@ def new_job_push_to_s3(x,y,z):
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
     df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',
-                                         Key = f'{x}/{y}_{z}.csv')
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',Key = f'{x}/{y}_{z}.csv')
+    print(f'{y}_{z} pushed to bucket in {x}')
 
 
 # In[37]:
@@ -770,8 +776,8 @@ def jd_push_to_s3(x,y,z):
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
     df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',
-                                         Key = f'{x}/{y}_{z}.csv')
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',Key = f'{x}/{y}_{z}.csv')
+    print(f'{y}_{z} pushed to bucket in {x}')
 
 
 # In[25]:
