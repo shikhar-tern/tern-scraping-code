@@ -112,7 +112,7 @@ def listing_page_data_list(x):
 
 def listing_page_master_df(x):
     old_listing_data = pd.DataFrame()
-    specific_files = new_job_data_list(x)
+    specific_files = listing_page_data_list(x)
     for file in specific_files:
         s3 = boto3.resource("s3")
         #load from bucket
