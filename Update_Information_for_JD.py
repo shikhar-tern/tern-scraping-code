@@ -104,9 +104,22 @@ def listing_page_data_list(x):
     
     # Flatten the remaining nested lists
     flat_list = [item for sublist in files_in_s3 for item in sublist]
+    
     filtered_list = [item for item in flat_list if item != '']
     prefixed_list = [f'{x}/' + item for item in filtered_list]
     return prefixed_list
+
+
+# In[ ]:
+
+
+def listing_page_master_push_to_s3(x,y):
+    print(f'Pushing {y} to s3 bucket in {x}')
+    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
+    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
+    #push to bucket
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
+    print(f'{y} pushed to bucket in {x}')
 
 
 # In[ ]:
@@ -135,31 +148,14 @@ def listing_page_master_df(x):
             pass
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
+    listing_page_master_push_to_s3('master_data','Listing_Page_Master')
     return old_listing_data
-
-
-# In[ ]:
-
-
-def listing_page_master_push_to_s3(x,y):
-    print(f'Pushing {y} to s3 bucket in {x}')
-    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
-    #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
-    print(f'{y} pushed to bucket in {x}')
 
 
 # In[9]:
 
 
 listing_page_master = listing_page_master_df('listing_page_data')
-
-
-# In[ ]:
-
-
-listing_page_master_push_to_s3('master_data','Listing_Page_Master')
 
 
 # In[10]:
@@ -603,7 +599,7 @@ if __name__ == '__main__':
     # Create a DataFrame from the results
     df_jd = pd.concat(results_list,ignore_index=True)
     df_jd.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_0_10000_{}.csv".format(str(date.today())),index=False)
+    df_jd.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_0_10000_{}.csv".format(str(date.today())),index=False)
 
 end_time = time.time()
 duration = end_time - start_time
@@ -619,7 +615,7 @@ del df_jd
 # In[ ]:
 
 
-jd_page_push_to_s3("jd_page_data",f"job_information_updated_all_0_10000_{str(date.today())}")
+jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_0_10000_{str(date.today())}")
 
 
 # In[15]:
@@ -647,7 +643,7 @@ if __name__ == '__main__':
     # Create a DataFrame from the results
     df_jd_2 = pd.concat(results_list,ignore_index=True)
     df_jd_2.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_2.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_10000_20000_{}.csv".format(str(date.today())),index=False)
+    df_jd_2.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_10000_20000_{}.csv".format(str(date.today())),index=False)
 
 end_time = time.time()
 duration = end_time - start_time
@@ -663,7 +659,7 @@ del df_jd_2
 # In[ ]:
 
 
-jd_page_push_to_s3("jd_page_data",f"job_information_updated_all_10000_20000_{str(date.today())}")
+jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_10000_20000_{str(date.today())}")
 
 
 # In[16]:
@@ -691,7 +687,7 @@ if __name__ == '__main__':
     # Create a DataFrame from the results
     df_jd_3 = pd.concat(results_list,ignore_index=True)
     df_jd_3.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_3.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_20000_30000_{}.csv".format(str(date.today())),index=False)
+    df_jd_3.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_20000_30000_{}.csv".format(str(date.today())),index=False)
 
 end_time = time.time()
 duration = end_time - start_time
@@ -707,7 +703,7 @@ del df_jd_3
 # In[ ]:
 
 
-jd_page_push_to_s3("jd_page_data",f"job_information_updated_all_20000_30000_{str(date.today())}")
+jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_20000_30000_{str(date.today())}")
 
 
 # In[15]:
@@ -735,7 +731,7 @@ if __name__ == '__main__':
     # Create a DataFrame from the results
     df_jd_4 = pd.concat(results_list,ignore_index=True)
     df_jd_4.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_4.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_30000_40000_{}.csv".format(str(date.today())),index=False)
+    df_jd_4.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_30000_40000_{}.csv".format(str(date.today())),index=False)
 
 end_time = time.time()
 duration = end_time - start_time
@@ -751,7 +747,7 @@ del df_jd_4
 # In[ ]:
 
 
-jd_page_push_to_s3("jd_page_data",f"job_information_updated_all_30000_40000_{str(date.today())}")
+jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_30000_40000_{str(date.today())}")
 
 
 # In[16]:
@@ -779,7 +775,7 @@ if __name__ == '__main__':
     # Create a DataFrame from the results
     df_jd_5 = pd.concat(results_list,ignore_index=True)
     df_jd_5.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_5.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_40000+_{}.csv".format(str(date.today())),index=False)
+    df_jd_5.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_40000+_{}.csv".format(str(date.today())),index=False)
 
 end_time = time.time()
 duration = end_time - start_time
@@ -795,17 +791,17 @@ del df_jd_5
 # In[ ]:
 
 
-jd_page_push_to_s3("jd_page_data",f"job_information_updated_all_40000+_{str(date.today())}")
+jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_40000+_{str(date.today())}")
 
 
 # In[17]:
 
 
-df_jd = pd.read_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_0_10000_{}.csv".format(str(date.today())))
-df_jd_2 = pd.read_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_10000_20000_{}.csv".format(str(date.today())))
-df_jd_3 = pd.read_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_20000_30000_{}.csv".format(str(date.today())))
-df_jd_4 = pd.read_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_30000_40000_{}.csv".format(str(date.today())))
-df_jd_5 = pd.read_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_all_40000+_{}.csv".format(str(date.today())))
+df_jd = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_0_10000_{}.csv".format(str(date.today())))
+df_jd_2 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_10000_20000_{}.csv".format(str(date.today())))
+df_jd_3 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_20000_30000_{}.csv".format(str(date.today())))
+df_jd_4 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_30000_40000_{}.csv".format(str(date.today())))
+df_jd_5 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_40000+_{}.csv".format(str(date.today())))
 
 
 # In[18]:
@@ -835,19 +831,13 @@ def jd_page_push_to_s3(x,y):
 # In[21]:
 
 
-final_jd_data.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/job_information_updated_{}.csv".format(str(date.today())),index=False)
+final_jd_data.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_{}.csv".format(str(date.today())),index=False)
 
 
 # In[ ]:
 
 
-jd_page_push_to_s3("jd_page_data",f"job_information_updated_{str(date.today())}")
-
-
-# In[ ]:
-
-
-
+jd_page_push_to_s3("job_information_updated",f"job_information_updated_{str(date.today())}")
 
 
 # In[ ]:
