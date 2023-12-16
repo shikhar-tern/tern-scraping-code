@@ -105,7 +105,8 @@ def listing_page_data_list(x):
     # Flatten the remaining nested lists
     flat_list = [item for sublist in files_in_s3 for item in sublist]
     filtered_list = [item for item in flat_list if item != '']
-    return filtered_list
+    prefixed_list = [f'{x}/' + item for item in filtered_list]
+    return prefixed_list
 
 
 # In[ ]:
