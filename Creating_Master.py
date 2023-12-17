@@ -271,7 +271,11 @@ def jd_master_df(a,b):
     specific_files = jd_data_list(a)
     jd_master = pd.DataFrame()
     for file in specific_files:
-        dd = pd.read_csv(file)
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'],index_col=0)
+
         dd['job_url'] = dd['job_url_hit']
         df_not_null = dd[(dd['job_url_hit'].notnull())]
         df_is_null = dd[(dd['job_url_hit'].isnull())]
@@ -286,7 +290,10 @@ def jd_master_df(a,b):
     
     specific_files = data_list(b)
     for file in specific_files:
-        dd = pd.read_csv(file)
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'],index_col=0)
         if 'job_url' in list(dd.columns):
             dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
             dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
