@@ -152,7 +152,7 @@ def merged_master_df(x):
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_excel(obj['Body'],index_col=0)
+        dd = pd.read_csv(obj['Body'],index_col=0)
         dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
         dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
         dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
