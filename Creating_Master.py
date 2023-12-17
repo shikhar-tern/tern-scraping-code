@@ -107,6 +107,7 @@ def push_to_s3(x,y):
 
 
 def listing_page_master_df(x):
+    print('Starting with Listing Page')
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     for file in specific_files:
@@ -145,10 +146,13 @@ listing_page_master = listing_page_master_df('listing_page_data')
 
 
 def merged_master_df(x):
+    print('Starting With Merged Master')
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     # Print the list of specific files
+    #print(specific_files)
     for file in specific_files:
+       # print(f"Starting with {file}")
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
@@ -176,6 +180,7 @@ merged_master = merged_master_df('master_new_job_data')
 
 
 def new_jobs_master_df(x):
+    print('Starting with New Jobs Data')
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     # Print the list of specific files
@@ -244,8 +249,6 @@ def jd_data_list(x):
     
     return filtered_list_2
 
-specific_files = data_list("job_information_updated")
-specific_files
 
 
 # In[ ]:
@@ -264,8 +267,8 @@ def push_to_s3(x,y):
 
 
 def jd_master_df(a,b):
-    
-    specific_files = jd_data_list(x)
+    print('Starting with Job Description')
+    specific_files = jd_data_list(a)
     jd_master = pd.DataFrame()
     for file in specific_files:
         dd = pd.read_csv(file)
@@ -281,7 +284,7 @@ def jd_master_df(a,b):
         dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
         jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
     
-    specific_files = data_list(x)
+    specific_files = data_list(b)
     for file in specific_files:
         dd = pd.read_csv(file)
         if 'job_url' in list(dd.columns):

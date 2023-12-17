@@ -3,7 +3,7 @@
 
 # In[1]:
 
-
+import sys
 import pandas as pd
 import requests
 from requests.exceptions import ConnectionError, ReadTimeout
@@ -28,7 +28,7 @@ from botocore.exceptions import ClientError
 import botocore
 import s3fs as s3
 
-
+sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
 # In[2]:
 
 

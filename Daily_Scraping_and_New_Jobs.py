@@ -3,7 +3,7 @@
 
 # In[1]:
 
-
+import sys
 import pandas as pd
 import requests
 from requests.exceptions import ConnectionError, ReadTimeout
@@ -48,7 +48,7 @@ import s3fs as s3
 
 
 # number of pages
-
+sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
 
 # In[3]:
 
@@ -839,7 +839,7 @@ jd_push_to_s3('jd_page_data','jd_page_for_new_job',str(date.today()))
 
 def master_df(new_job,df_jd):
     master_final = new_job.merge(df_jd,on=['job_url_hit'],how='left')
-    master_final.to_excel(r"/home/ec2-user/scrape_data/master_new_job_data/master_new_job_{}.xlsx".format(str(date.today())),index=False)
+    master_final.to_csv(r"/home/ec2-user/scrape_data/master_new_job_data/master_new_job_{}.csv".format(str(date.today())),index=False)
     return master_final
 
 
@@ -849,10 +849,10 @@ def master_df(new_job,df_jd):
 def master_push_to_s3(x,y,z):
     print(f'Pushing {y}_{str(date.today())} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_excel(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.xlsx")
+    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.xlsx',
-                                         Key = f'{x}/{y}_{z}.xlsx')
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',
+                                         Key = f'{x}/{y}_{z}.csv')
 
 
 # In[39]:
