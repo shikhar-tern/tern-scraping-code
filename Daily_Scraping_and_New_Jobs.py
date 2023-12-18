@@ -745,6 +745,7 @@ def new_job_df(x,final_data):
             del dd['Unnamed: 0']
         except:
             pass
+        dd['job_url'] = dd['job_url_hit']
         dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
         dd['scrap_date'] = file.split('all_')[-1].strip('.csv')
         dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
