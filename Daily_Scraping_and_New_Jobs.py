@@ -745,12 +745,12 @@ def new_job_df(x,final_data):
             del dd['Unnamed: 0']
         except:
             pass
-        dd['job_url'] = dd['job_url_hit']
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['scrap_date'] = file.split('all_')[-1].strip('.csv')
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd = dd.drop_duplicates(['job_url_hit'],keep='first').reset_index(drop=True)
+        # dd['job_url'] = dd['job_url_hit']
+        # dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+        # dd['scrap_date'] = file.split('all_')[-1].strip('.csv')
+        # dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+        # dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+        dd = dd.drop_duplicates(['scrap_date','job_url_hit'],keep='first').reset_index(drop=True)
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     new_job = final_data[~(final_data['job_code'].isin(list(old_listing_data['job_code'])))].reset_index(drop=True)
     new_job.to_csv(r"/home/ec2-user/scrape_data/new_job_data/new_job_{}.csv".format(str(date.today())),index=False)
