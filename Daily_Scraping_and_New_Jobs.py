@@ -43,7 +43,7 @@ import s3fs as s3
 
 
 # number of pages
-sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
+sys.stdout = open(r'/home/ec2-user/scrape_data/log.txt','w')
 
 # In[3]:
 
