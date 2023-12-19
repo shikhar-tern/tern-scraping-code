@@ -29,8 +29,6 @@ import botocore
 import s3fs as s3
 
 sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
-# In[2]:
-
 
 def fixing_job_ref(code):
     if '<' in code:
@@ -40,16 +38,10 @@ def fixing_job_ref(code):
         return code
 
 
-# In[3]:
-
-
 # Function to remove the specified pattern from a URL
 def remove_keyword_param(url):
     pattern = re.compile(r'keyword=[^&]+&')
     return re.sub(pattern, '', url)
-
-
-# In[4]:
 
 
 def extract_job_codes(link):
@@ -67,14 +59,8 @@ def extract_job_codes(link):
         return '-'
 
 
-# In[5]:
-
-
 def short_link(link):
     return link.split('?')[0]
-
-
-# In[6]:
 
 
 def extracting_keyword(url):
@@ -91,10 +77,7 @@ def extracting_keyword(url):
         return '-'
 
 
-# In[ ]:
-
-
-def listing_page_data_list(x):
+def active_job_data_list(x):
     s3 = boto3.resource("s3")
     s3_bucket = s3.Bucket("nhs-dataset")
     dir = x
@@ -104,76 +87,28 @@ def listing_page_data_list(x):
     
     # Flatten the remaining nested lists
     flat_list = [item for sublist in files_in_s3 for item in sublist]
-    
     filtered_list = [item for item in flat_list if item != '']
-    prefixed_list = [f'{x}/' + item for item in filtered_list]
+    #Only picking Active_Jobs
+    filt_list = [item for item in filtered_list if item == 'Active_Jobs.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
     return prefixed_list
 
 
-# In[ ]:
-
-
-def listing_page_master_push_to_s3(x,y):
-    print(f'Pushing {y} to s3 bucket in {x}')
-    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
-    #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
-    print(f'{y} pushed to bucket in {x}')
-
-
-# In[ ]:
-
-
-def listing_page_master_df(x):
-    old_listing_data = pd.DataFrame()
-    specific_files = listing_page_data_list(x)
+def pull_active_jobs_append_new_job_list(x):
+    specific_files = active_job_data_list(x)
+    active_jobs_df = pd.DataFrame()
     for file in specific_files:
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
         dd = pd.read_csv(obj['Body'])
-        try:
-            del dd['Unnamed: 0']
-        except:
-            pass
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['scrap_date'] = file.split('all_')[-1].strip('.csv')
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd = dd.drop_duplicates(['job_url_hit'],keep='first').reset_index(drop=True)
-        try:
-            del dd['keyword']
-        except:
-            pass
-        old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
-    old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
-    listing_page_master_push_to_s3('master_data','Listing_Page_Master')
-    return old_listing_data
+        active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
+    active_job_list = list(set(active_jobs_df['short_job_link'].unique()))
+    return active_job_list
 
 
-# In[9]:
-
-
-listing_page_master = listing_page_master_df('listing_page_data')
-
-
-# In[10]:
-
-
-update_these_links = list(set(listing_page_master['short_job_link']))
+update_these_links = pull_active_jobs_append_new_job_list('master_data')
 print(len(update_these_links))
-
-
-# In[11]:
-
-
-del listing_page_master
-
-
-# ### JD Page
-
-# In[12]:
 
 
 def remove_duplicates(input_list):
@@ -186,9 +121,6 @@ def remove_duplicates(input_list):
             result.append(item)
     
     return result
-
-
-# In[13]:
 
 
 def extract_data(response, url):
@@ -524,9 +456,6 @@ def extract_data(response, url):
         return df3
 
 
-# In[14]:
-
-
 def scrape_jd_page(url, request_timeout=30):
     max_retries = 3  # Number of maximum retries
     delay = 2  # Delay between retries in seconds
@@ -562,9 +491,6 @@ def scrape_jd_page(url, request_timeout=30):
     return dff
 
 
-# In[ ]:
-
-
 def jd_page_push_to_s3(x,y):
     print(f'Pushing {y} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
@@ -574,14 +500,11 @@ def jd_page_push_to_s3(x,y):
     print(f'{y} pushed to bucket in {x}')
 
 
-# In[14]:
-
-
 start_time = time.time()
 print(str(datetime.now()))
 if __name__ == '__main__':
     # Define the URLs
-    jd_lists = update_these_links[:10000]
+    jd_lists = update_these_links
     results_list = []
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
@@ -589,7 +512,6 @@ if __name__ == '__main__':
         results = executor.map(scrape_jd_page, jd_lists)
         for i, result in enumerate(results):
             if result is not None:
-#                 print(result)
                 results_list.append(result)                      
                 print(f"Result {i + 1} appended")
             else:
@@ -599,249 +521,10 @@ if __name__ == '__main__':
     # Create a DataFrame from the results
     df_jd = pd.concat(results_list,ignore_index=True)
     df_jd.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_0_10000_{}.csv".format(str(date.today())),index=False)
-
+    df_jd['job_reference_number'] = df_jd['job_reference_number'].astype('string').apply(lambda x: fixing_job_ref(x))
+    df_jd.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_{}.csv".format(str(date.today())),index=False)
+    jd_page_push_to_s3("job_information_updated",f"job_information_updated_{str(date.today())}")
 end_time = time.time()
 duration = end_time - start_time
 print(f"Time taken: {duration/60} mintues")
-
-
-# In[ ]:
-
-
-del df_jd
-
-
-# In[ ]:
-
-
-jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_0_10000_{str(date.today())}")
-
-
-# In[15]:
-
-
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links[10000:20000]
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists)
-        for i, result in enumerate(results):
-            if result is not None:
-#                 print(result)
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd_2 = pd.concat(results_list,ignore_index=True)
-    df_jd_2.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_2.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_10000_20000_{}.csv".format(str(date.today())),index=False)
-
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
-
-# In[ ]:
-
-
-del df_jd_2
-
-
-# In[ ]:
-
-
-jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_10000_20000_{str(date.today())}")
-
-
-# In[16]:
-
-
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links[20000:30000]
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists)
-        for i, result in enumerate(results):
-            if result is not None:
-#                 print(result)
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd_3 = pd.concat(results_list,ignore_index=True)
-    df_jd_3.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_3.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_20000_30000_{}.csv".format(str(date.today())),index=False)
-
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
-
-# In[ ]:
-
-
-del df_jd_3
-
-
-# In[ ]:
-
-
-jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_20000_30000_{str(date.today())}")
-
-
-# In[15]:
-
-
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links[30000:40000]
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists)
-        for i, result in enumerate(results):
-            if result is not None:
-#                 print(result)
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd_4 = pd.concat(results_list,ignore_index=True)
-    df_jd_4.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_4.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_30000_40000_{}.csv".format(str(date.today())),index=False)
-
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
-
-# In[ ]:
-
-
-del df_jd_4
-
-
-# In[ ]:
-
-
-jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_30000_40000_{str(date.today())}")
-
-
-# In[16]:
-
-
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links[40000:]
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists)
-        for i, result in enumerate(results):
-            if result is not None:
-#                 print(result)
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd_5 = pd.concat(results_list,ignore_index=True)
-    df_jd_5.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_5.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_40000+_{}.csv".format(str(date.today())),index=False)
-
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
-
-# In[ ]:
-
-
-del df_jd_5
-
-
-# In[ ]:
-
-
-jd_page_push_to_s3("job_information_updated",f"job_information_updated_all_40000+_{str(date.today())}")
-
-
-# In[17]:
-
-
-df_jd = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_0_10000_{}.csv".format(str(date.today())))
-df_jd_2 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_10000_20000_{}.csv".format(str(date.today())))
-df_jd_3 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_20000_30000_{}.csv".format(str(date.today())))
-df_jd_4 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_30000_40000_{}.csv".format(str(date.today())))
-df_jd_5 = pd.read_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_all_40000+_{}.csv".format(str(date.today())))
-
-
-# In[18]:
-
-
-final_jd_data = pd.concat([df_jd,df_jd_2,df_jd_3,df_jd_4,df_jd_5],axis=0,ignore_index=True)
-
-
-# In[19]:
-
-
-final_jd_data['job_reference_number'] = final_jd_data['job_reference_number'].astype('string').apply(lambda x: fixing_job_ref(x))
-
-
-# In[ ]:
-
-
-def jd_page_push_to_s3(x,y):
-    print(f'Pushing {y} to s3 bucket in {x}')
-    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
-    #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
-    print(f'{y} pushed to bucket in {x}')
-
-
-# In[21]:
-
-
-final_jd_data.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_{}.csv".format(str(date.today())),index=False)
-
-
-# In[ ]:
-
-
-jd_page_push_to_s3("job_information_updated",f"job_information_updated_{str(date.today())}")
-
-
-# In[ ]:
-
-
-
 
