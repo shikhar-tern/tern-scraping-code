@@ -132,7 +132,7 @@ def listing_page_master_df(x):
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'],index_col=0)
+        dd = pd.read_csv(obj['Body'])
         try:
             del dd['Unnamed: 0']
         except:
