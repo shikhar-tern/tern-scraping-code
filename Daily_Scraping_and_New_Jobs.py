@@ -1058,14 +1058,37 @@ def active_inactive(x):
     else:
         return 'active'
 
-# def pull_active_jobs_append_new_job(x,):
-#     specific_files = data_list(x)
+def active_job_data_list(x):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)
     
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking listing_file
+    filt_list = [item for item in filtered_list if item == 'Active_Jobs.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
 
+def pull_active_jobs_append_new_job_list(x,new_job):
+    specific_files = active_job_data_list(x)
+    active_jobs_df = pd.DataFrame()
+    for file in specific_files:
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'])
+        active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
+    active_job_list = list(set(active_jobs_df['short_job_link'].unique())) + list(set(new_job['short_job_link']))
+    return active_job_list
 
-def update_information(link):
+def update_information(link,job_lists):
     print(f"Started with: {link}")
-    job_lists = list(listing_page_master['short_job_link'].unique())
+    # job_lists = list(listing_page_master['short_job_link'].unique())
     a = listing_page_master[listing_page_master['short_job_link']==link].sort_values('scrap_date')
     b = jd_master[jd_master['short_job_link']==link].sort_values('scraped_date')
     
@@ -1261,7 +1284,7 @@ def update_information(link):
         return c
 
 def process_link(link):
-    new_update = update_information(link)
+    new_update = update_information(link,job_lists)
     return new_update, new_update.tail(1)
 
 start_time = time.time()
@@ -1270,7 +1293,7 @@ job_updates = pd.DataFrame()
 latest_job_updates = pd.DataFrame()
 if __name__ == '__main__':
     # Define the URLs
-    job_lists = list(listing_page_master['short_job_link'].unique())
+    job_lists = pull_active_jobs_append_new_job_list('master_data',new_job)
 
     results_list = []
     
