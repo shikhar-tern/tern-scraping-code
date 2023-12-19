@@ -20,18 +20,12 @@ import s3fs as s3
 
 # #### Listing Page Master
 
-# In[2]:
-
-
 def fixing_job_ref(code):
     if '<' in str(code):
         soup = BeautifulSoup(str(code), 'html.parser')
         return soup.text
     else:
         return code
-
-
-# In[3]:
 
 
 # Function to remove the specified pattern from a URL
@@ -41,9 +35,6 @@ def remove_keyword_param(url):
         return re.sub(pattern, '', url)
     except:
         return url
-
-
-# In[4]:
 
 
 def extract_job_codes(link):
@@ -61,8 +52,6 @@ def extract_job_codes(link):
         return '-'
 
 
-# In[5]:
-
 
 def short_link(link):
     try:
@@ -70,9 +59,6 @@ def short_link(link):
     except:
         a = link
     return a
-
-
-# In[ ]:
 
 
 def data_list(x):
@@ -91,9 +77,6 @@ def data_list(x):
     return prefixed_list
 
 
-# In[ ]:
-
-
 def push_to_s3(x,y):
     print(f'Pushing {y} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
@@ -101,9 +84,6 @@ def push_to_s3(x,y):
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
-
-
-# In[ ]:
 
 
 def listing_page_master_df(x):
@@ -134,16 +114,10 @@ def listing_page_master_df(x):
     return old_listing_data
 
 
-# In[9]:
-
-
 listing_page_master = listing_page_master_df('listing_page_data')
 
 
 # #### Merged Master
-
-# In[8]:
-
 
 def merged_master_df(x):
     print('Starting With Merged Master')
@@ -168,16 +142,10 @@ def merged_master_df(x):
     return old_listing_data
 
 
-# In[9]:
-
-
 merged_master = merged_master_df('master_new_job_data')
 
 
 # #### New Jobs Master
-
-# In[10]:
-
 
 def new_jobs_master_df(x):
     print('Starting with New Jobs Data')
@@ -200,16 +168,10 @@ def new_jobs_master_df(x):
     return old_listing_data
 
 
-# In[11]:
-
-
 new_jobs_master = new_jobs_master_df('new_job_data')
 
 
 # #### Job Description Master
-
-# In[12]:
-
 
 def extract_job_codes_(link):
     # Define the regex pattern to match the job code
@@ -224,9 +186,6 @@ def extract_job_codes_(link):
         return job_code
     else:
         return '-'
-
-
-# In[ ]:
 
 
 def jd_data_list(x):
@@ -250,10 +209,6 @@ def jd_data_list(x):
     return filtered_list_2
 
 
-
-# In[ ]:
-
-
 def push_to_s3(x,y):
     print(f'Pushing {y} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
@@ -261,9 +216,6 @@ def push_to_s3(x,y):
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
-
-
-# In[19]:
 
 
 def jd_master_df(a,b):
@@ -316,10 +268,6 @@ def jd_master_df(a,b):
     push_to_s3("master_data","Jobs_Information_Master")
     
     return jd_master
-
-
-# In[20]:
-
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
 
