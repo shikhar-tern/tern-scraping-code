@@ -26,7 +26,7 @@ import s3fs as s3
 # ### Listing Page
 
 # number of pages
-# sys.stdout = open(r'/home/ec2-user/scrape_data/log.txt','w')
+sys.stdout = open(r'/home/ec2-user/scrape_data/log.txt','w')
 
 
 def get_max_page_number(x):
@@ -834,7 +834,7 @@ def listing_page_master_df(x):
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
         dd = pd.read_csv(obj['Body'])
-        print(dd.columns)
+        # print(dd.columns)
         try:
             del dd['Unnamed: 0']
         except:
