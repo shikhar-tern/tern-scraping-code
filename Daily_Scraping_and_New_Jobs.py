@@ -26,7 +26,7 @@ import s3fs as s3
 # ### Listing Page
 
 # number of pages
-sys.stdout = open(r'/home/ec2-user/scrape_data/log.txt','w')
+# sys.stdout = open(r'/home/ec2-user/scrape_data/log.txt','w')
 
 
 def get_max_page_number(x):
