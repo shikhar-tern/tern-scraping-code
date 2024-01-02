@@ -62,8 +62,8 @@ def email_people(email_cred,df):
     # Email configuration
     sender_email = email_cred['email']
     sender_password = email_cred['password']
-    # receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com"]
-    receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com","ashita@tern-group.com","akshay.rao@tern-group.com"]
+    receiver_email = ["shikharrajput@gmail.com"]
+    # receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com","ashita@tern-group.com","akshay.rao@tern-group.com"]
 
     subject = f"New Job on {str(date.today())}"
     
