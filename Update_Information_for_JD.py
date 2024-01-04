@@ -23,7 +23,7 @@ from botocore.exceptions import ClientError
 import botocore
 import s3fs as s3
 
-sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
+# sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
 
 def fixing_job_ref(code):
     if '<' in code:
