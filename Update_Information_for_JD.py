@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
 import sys
 import pandas as pd
 import requests
@@ -132,6 +127,7 @@ def extract_data(response, url):
         about_us_list = []
         job_discription_list = []
         date_posted_list = []
+        band_list = []
         job_reference_number_list = []
         qualification_essentials_list = []
         qualification_desirable_list = []
@@ -195,7 +191,14 @@ def extract_data(response, url):
             date_posted_list.append(date_posted)
         except:
             date_posted_list.append('-')
-        
+
+        #band
+        try:
+            band = soup.find('p',id='payscheme-band').text
+            band_list.append(band)
+        except:
+            band_list.append('-')
+    
         #job_reference_number
         try:
             job_reference = soup.find('p',id='trac-job-reference')
@@ -338,6 +341,7 @@ def extract_data(response, url):
         about_us_list,
         job_discription_list,
         date_posted_list,
+        band_list,
         job_reference_number_list,
         qualification_essentials_list,
         qualification_desirable_list,
@@ -361,6 +365,7 @@ def extract_data(response, url):
         'about_us',
         'job_discription',
         'date_posted',
+        'band',
         'job_reference_number',
         'qualification_essentials',
         'qualification_desirable',
@@ -387,6 +392,7 @@ def extract_data(response, url):
         about_us_list = ['-']
         job_discription_list = ['-']
         date_posted_list = ['-']
+        band_list = ['-']
         job_reference_number_list = ['-']
         qualification_essentials_list = ['-']
         qualification_desirable_list = ['-']
@@ -411,6 +417,7 @@ def extract_data(response, url):
         about_us_list,
         job_discription_list,
         date_posted_list,
+        band_list,
         job_reference_number_list,
         qualification_essentials_list,
         qualification_desirable_list,
@@ -434,6 +441,7 @@ def extract_data(response, url):
         'about_us',
         'job_discription',
         'date_posted',
+        'band',
         'job_reference_number',
         'qualification_essentials',
         'qualification_desirable',
