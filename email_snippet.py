@@ -56,17 +56,13 @@ def format_row(row):
 
 df = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv")
 
-def email_people(email_cred,df):
-    # Load your DataFrame from the CSV file
+def email_people(email_cred, df):
     new_csv_file_path = r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv"
     # Email configuration
     sender_email = email_cred['email']
     sender_password = email_cred['password']
     receiver_email = ["shikharrajput@gmail.com"]
-    # receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com","ashita@tern-group.com","akshay.rao@tern-group.com"]
-
-    subject = f"New Job on {str(date.today())}"
-    
+    subject = f"Active Jobs on {str(date.today())}"
     # Create the email body with a formatted table
     body = f"""
     <html>
@@ -80,35 +76,25 @@ def email_people(email_cred,df):
       <p>Best regards,<br>Your Name</p>
     </body>
     </html>
-    """
-    
+    """  
     # Create the email message
     message = MIMEMultipart()
     message.attach(MIMEText(body, 'html'))
-    
     # Attach the new CSV file
     with open(new_csv_file_path, 'rb') as attachment:
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename=Active_Jobs_with_categorisation')
+        part.add_header('Content-Disposition', f'attachment; filename=Active_Jobs_with_categorisation.csv')
         message.attach(part)
-    
-    # Create the email message
-    message['From'] = sender_email
-    message['To'] = ", ".join(receiver_email)
-    message['Subject'] = subject
-
+    # Set up the SSL context
     context = ssl.create_default_context()
-
     # Connect to the SMTP server and send the email
     smtp_server = "smtp.gmail.com"
     smtp_port = 465
-
     with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
         server.login(sender_email, sender_password)
-        server.send_message(message)
-
+        server.sendmail(sender_email, receiver_email, message.as_string())
     print("Email sent successfully!")
 
 email_people(email_cred,df)
