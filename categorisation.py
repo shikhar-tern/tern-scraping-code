@@ -392,7 +392,6 @@ df7['band_'] = df7['band'].apply(lambda x: band_grade(x))
 df7[['band','grade']] = pd.DataFrame(df7.band_.tolist(), index= df7.index)
 del df7['band_']
 del df7['disclosure_and_barring_service_check']
-del df7['salary_range']
 del df7['salary_range_updated']
 df7['salary_range_start'] = df7['salary_range_start'].replace('Depends on experience','-')
 df7['salary_range_end'] = df7['salary_range_end'].replace('Depends on experience','-')
@@ -402,7 +401,7 @@ df7['job_type'] = df7['job_type'].str.strip()
 for i in df7.select_dtypes('object').columns.to_list():
     df7[i] = df7[i].astype(str)
     df7[i] = df7[i].str.strip()
-df7 = df7.replace('¬','').replace('Äì','')
+df7 = df7.replace('¬','').replace('Äì','').replace('  â€“  ',' ')
 df7['working_pattern'] = df7['working_pattern'].str.split(',').str[0]
 df7['Area_Specialisation_Doctors'] = df7['profession'].apply(lambda x: 'Doctors' if x == 'Doctor' else '')
 df7['Area_Specialisation_Nurse_CW'] = df7['profession'].apply(lambda x: 'Nurse CW' if x in ['Care Worker (HCA)', 'Nurse'] else '')
