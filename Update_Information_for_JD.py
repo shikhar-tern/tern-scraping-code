@@ -61,7 +61,6 @@ def short_link(link):
 def extracting_keyword(url):
     # Extract the keyword using regex
     match = re.search(r'keyword=([^&]+)', url)
-
     if match:
         keyword = match.group(1)
         # Decode URL-encoded characters
