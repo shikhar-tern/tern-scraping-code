@@ -401,7 +401,7 @@ df7['job_type'] = df7['job_type'].str.strip()
 for i in df7.select_dtypes('object').columns.to_list():
     df7[i] = df7[i].astype(str)
     df7[i] = df7[i].str.strip()
-df7 = df7.replace('¬','').replace('Äì','').replace('  â€“  ',' ')
+df7 = df7.replace('¬','').replace('Äì','').replace('  â€“  ',' ').replace('ÔøΩ','').replace('â€“','')
 df7['working_pattern'] = df7['working_pattern'].str.split(',').str[0]
 df7['Area_Specialisation_Doctors'] = df7['profession'].apply(lambda x: 'Doctors' if x == 'Doctor' else '')
 df7['Area_Specialisation_Nurse_CW'] = df7['profession'].apply(lambda x: 'Nurse CW' if x in ['Care Worker (HCA)', 'Nurse'] else '')
