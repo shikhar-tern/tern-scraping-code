@@ -10,4 +10,11 @@ for i in files:
     else:
         new_list.append(i)
 
-print(new_list)
+def del_files(dir,x):
+    new_path = dir + '/' + x
+    files_list = os.listdir(new_path)
+    for j in files_list:
+        os.remove(dir+"/"+x+"/"+j)
+
+for x in new_list:
+    del_files(dir,x)
