@@ -1,4 +1,12 @@
 import os
-files = [x for x in os.listdir() if os.path.isdir(x)]
-new_list = [item for item in files if item != 'master_data']
+files = os.listdir('/home/ec2-user/scrape_data')
+new_list = []
+for i in files:
+    if i == 'master_data':
+        pass
+    elif i == 'log.txt':
+        pass
+    else:
+        new_list.append(i)
+
 print(new_list)
