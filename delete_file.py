@@ -14,7 +14,8 @@ def del_files(dir,x):
     new_path = dir + '/' + x
     files_list = os.listdir(new_path)
     for j in files_list:
-        os.remove(dir+"/"+x+"/"+j)
+        print(dir+"/"+x+"/"+j)
+        #os.remove(dir+"/"+x+"/"+j)
 
 for x in new_list:
     del_files(dir,x)
