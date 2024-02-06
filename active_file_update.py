@@ -189,8 +189,8 @@ def jd_master_df(a,b):
     return jd_master
 
 
-# jd_master = jd_master_df('job_information_updated','jd_page_data')
-jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+jd_master = jd_master_df('job_information_updated','jd_page_data')
+# jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
 
 ### Update Code
 jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
