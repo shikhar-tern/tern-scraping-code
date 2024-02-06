@@ -230,7 +230,7 @@ listing_all_df[['salary_range_start','salary_range_end']] = pd.DataFrame(listing
 del listing_all_df['salary_range_']
 listing_all_df['salary_range_start'] = listing_all_df['salary_range_start'].replace('Depends on experience','-')
 listing_all_df['salary_range_end'] = listing_all_df['salary_range_end'].replace('Depends on experience','-')
-
+print("Starting with Active File")
 active_jobs = listing_all_df[listing_all_df['active_inactive']=='active']
 active_jobs_ = active_jobs[['Role','salary','closing_date','job_code','Today_Date','Days_to_close', 'active_inactive', 'salary_range_start','salary_range_end','short_job_link','scrap_date']]
 active_jobs_2 = active_jobs_.merge(jd_master[['job_summary', 'job_discription', 'employer_name',
