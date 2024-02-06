@@ -40,10 +40,8 @@ def remove_keyword_param(url):
 def extract_job_codes(link):
     # Define the regex pattern to match the job code
     pattern = r'/jobadvert/([A-Za-z0-9-]+)\?'
-
     # Use re.search to find the match in the link
     match = re.search(pattern, link)
-
     # Check if a match is found and extract the job code
     if match:
         job_code = match.group(1)
@@ -67,11 +65,9 @@ def data_list(x):
     dir = x
     files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
     # Remove the 0th element
-    files_in_s3.pop(0)
-    
+    files_in_s3.pop(0)   
     # Flatten the remaining nested lists
-    flat_list = [item for sublist in files_in_s3 for item in sublist]
-    
+    flat_list = [item for sublist in files_in_s3 for item in sublist]   
     filtered_list = [item for item in flat_list if item != '']
     prefixed_list = [f'{x}/' + item for item in filtered_list]
     return prefixed_list
@@ -176,10 +172,8 @@ new_jobs_master = new_jobs_master_df('new_job_data')
 def extract_job_codes_(link):
     # Define the regex pattern to match the job code
     pattern = r'/jobadvert/([A-Za-z0-9-]+)?'
-
     # Use re.search to find the match in the link
     match = re.search(pattern, link)
-
     # Check if a match is found and extract the job code
     if match:
         job_code = match.group(1)
@@ -194,18 +188,13 @@ def jd_data_list(x):
     dir = x
     files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
     # Remove the 0th element
-    files_in_s3.pop(0)
-    
+    files_in_s3.pop(0)    
     # Flatten the remaining nested lists
-    flat_list = [item for sublist in files_in_s3 for item in sublist]
-    
+    flat_list = [item for sublist in files_in_s3 for item in sublist]   
     filtered_list = [item for item in flat_list if item != '']
-    prefixed_list = [f'{x}/' + item for item in filtered_list]
-    
-    pattern = re.compile(r'/job_information_updated_\d{4}-\d{2}-\d{2}\.csv$')
-    
-    filtered_list_2 = [element for element in prefixed_list if pattern.search(element)]
-    
+    prefixed_list = [f'{x}/' + item for item in filtered_list]    
+    pattern = re.compile(r'/job_information_updated_\d{4}-\d{2}-\d{2}\.csv$')   
+    filtered_list_2 = [element for element in prefixed_list if pattern.search(element)]    
     return filtered_list_2
 
 
@@ -227,7 +216,6 @@ def jd_master_df(a,b):
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
         dd = pd.read_csv(obj['Body'])
-
         dd['job_url'] = dd['job_url_hit']
         df_not_null = dd[(dd['job_url_hit'].notnull())]
         df_is_null = dd[(dd['job_url_hit'].isnull())]
@@ -238,8 +226,7 @@ def jd_master_df(a,b):
         dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
         dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
         dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
-        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-    
+        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)    
     specific_files = data_list(b)
     for file in specific_files:
         s3 = boto3.resource("s3")
@@ -261,12 +248,9 @@ def jd_master_df(a,b):
             dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
             dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
             jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-    del jd_master['page_number']
-    
-    jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
-    
-    push_to_s3("master_data","Jobs_Information_Master")
-    
+    del jd_master['page_number']    
+    jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)    
+    push_to_s3("master_data","Jobs_Information_Master")    
     return jd_master
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
