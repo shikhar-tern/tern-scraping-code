@@ -12,8 +12,6 @@ import re
 import s3fs as s3
 warnings.filterwarnings('ignore')
 
-listing_all_df = pd.read_csv(r"C:/Users/admin/Desktop/tern-scripts/Listing_Page_Master.csv")
-
 def pulling_list_from_s3(x,y):
     s3 = boto3.resource("s3")
     s3_bucket = s3.Bucket("nhs-dataset")
