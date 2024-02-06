@@ -237,6 +237,8 @@ active_jobs_2 = active_jobs_.merge(jd_master[['job_summary', 'job_discription', 
        'employer_address', 'employer_post_code', 'employer_website',
        'contact_person_position', 'contact_person_name',
        'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
+active_jobs_2.reset_index(drop=True,inplace=True)
+
 print('\n')
 print(active_jobs_.head())
 print('\n')
