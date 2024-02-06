@@ -143,7 +143,7 @@ def jd_data_list(x):
     return filtered_list_2
 
 def jd_master_df(a,b):
-    print('Starting with Job Description')
+    # print('Starting with Job Description')
     specific_files = jd_data_list(a)
     jd_master = pd.DataFrame()
     for file in specific_files:
