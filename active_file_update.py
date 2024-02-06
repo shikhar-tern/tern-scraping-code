@@ -246,13 +246,4 @@ print(active_jobs_2.columns)
 print('\n')
 print(active_jobs_2.shape)
 active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
-
-def push_to_s3(x,y):
-    print(f'Pushing {y} to s3 bucket in {x}')
-    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
-    #push to bucket
-    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
-    print(f'{y} pushed to bucket in {x}')
-
 push_to_s3("master_data","Active_Jobs")
