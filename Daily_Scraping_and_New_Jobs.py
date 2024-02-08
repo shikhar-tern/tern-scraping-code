@@ -1000,7 +1000,7 @@ def jd_master_df(a,b):
             jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
     del jd_master['page_number']
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
-    push_to_s3("master_data","Jobs_Information_Master")
+    # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
 
