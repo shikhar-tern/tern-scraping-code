@@ -32,7 +32,7 @@ def specialisation_list(x):
     prefixed_list = [f'{x}/' + item for item in filt_list]
     return prefixed_list
 
-def active_jobs_list(x):
+def active_job_data_list(x):
     s3 = boto3.resource("s3")
     s3_bucket = s3.Bucket("nhs-dataset")
     dir = x
@@ -49,7 +49,7 @@ def active_jobs_list(x):
     return prefixed_list
 
 def active_jobs_df(x):
-    specific_files = specialisation_list(x)
+    specific_files = active_job_data_list(x)
     active_jobs_df = pd.DataFrame()
     for file in specific_files:
         s3 = boto3.resource("s3")
