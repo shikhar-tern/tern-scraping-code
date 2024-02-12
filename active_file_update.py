@@ -8,6 +8,7 @@ import botocore
 import numpy as np
 import warnings
 from bs4 import BeautifulSoup
+import time
 import re
 import s3fs as s3
 warnings.filterwarnings('ignore')
@@ -188,63 +189,56 @@ def jd_master_df(a,b):
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
+def update_information(jd_master,listing_page_master):
+    start_time = time.time()
+    # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+    ### Update Code
+    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
+    # Assuming 'closing_date' is the column with date strings
+    jd_master['date_posted'] = pd.to_datetime(
+        jd_master['date_posted'], 
+        infer_datetime_format=True, 
+        errors='coerce')
+    jd_master.drop_duplicates('short_job_link',keep='last',inplace=True)
+    jd_master.reset_index(drop=True,inplace=True)
+    # Convert the datetime column to the desired 'yyyy-mm-dd' format
+    jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'].dt.strftime('%Y-%m-%d'))
+    listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'])
+    # Assuming 'closing_date' is the column with date strings
+    listing_all_df['closing_date'] = pd.to_datetime(
+        listing_all_df['closing_date'], 
+        infer_datetime_format=True, 
+        errors='coerce')
+    # Convert the datetime column to the desired 'yyyy-mm-dd' format
+    listing_all_df['closing_date'] = pd.to_datetime(listing_all_df['closing_date'].dt.strftime('%Y-%m-%d'))
+    listing_all_df.drop_duplicates(['short_job_link'],keep="last",inplace=True)
+    listing_all_df.reset_index(drop=True,inplace=True)
+    listing_all_df['Today_Date'] = str(date.today())
+    listing_all_df['Today_Date'] = pd.to_datetime(listing_all_df['Today_Date'])
+    listing_all_df['Days_to_close'] = listing_all_df['closing_date'] - listing_all_df['Today_Date']
+    listing_all_df['active_inactive'] = listing_all_df['Days_to_close'].apply(lambda x: active_inactive(x))                                             
+    listing_all_df['salary_range_'] = listing_all_df['salary'].apply(lambda x: salary_check(x))
+    listing_all_df[['salary_range_start','salary_range_end']] = pd.DataFrame(listing_all_df.salary_range_.tolist(), index= listing_all_df.index)
+    del listing_all_df['salary_range_']
+    listing_all_df['salary_range_start'] = listing_all_df['salary_range_start'].replace('Depends on experience','-')
+    listing_all_df['salary_range_end'] = listing_all_df['salary_range_end'].replace('Depends on experience','-')
+    print("Starting with Active File")
+    active_jobs = listing_all_df[listing_all_df['active_inactive']=='active']
+    active_jobs_ = active_jobs[['Role','salary','closing_date','job_code','Today_Date','Days_to_close', 'active_inactive', 'salary_range_start','salary_range_end','short_job_link','scrap_date']]
+    active_jobs_2 = active_jobs_.merge(jd_master[['job_summary', 'job_discription','band', 'employer_name',
+        'employer_address', 'employer_post_code', 'employer_website',
+        'contact_person_position', 'contact_person_name',
+        'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
+    active_jobs_2.reset_index(drop=True,inplace=True)
+    active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
+    listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
+    push_to_s3("master_data","Active_Jobs")
+    push_to_s3("master_data","Latest_Updated_Master") 
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Time taken to create Active Jobs: {duration/60} mintues")
+    return active_jobs_2
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
-# jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
-
-### Update Code
-jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
-# Assuming 'closing_date' is the column with date strings
-jd_master['date_posted'] = pd.to_datetime(
-    jd_master['date_posted'], 
-    infer_datetime_format=True, 
-    errors='coerce')
-
-jd_master.drop_duplicates('short_job_link',keep='last',inplace=True)
-jd_master.reset_index(drop=True,inplace=True)
-
-# Convert the datetime column to the desired 'yyyy-mm-dd' format
-jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'].dt.strftime('%Y-%m-%d'))
-
 listing_all_df = fetching_df('master_data','Listing_Page_Master')
-
-listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'])
-
-# Assuming 'closing_date' is the column with date strings
-listing_all_df['closing_date'] = pd.to_datetime(
-    listing_all_df['closing_date'], 
-    infer_datetime_format=True, 
-    errors='coerce')
-
-# Convert the datetime column to the desired 'yyyy-mm-dd' format
-listing_all_df['closing_date'] = pd.to_datetime(listing_all_df['closing_date'].dt.strftime('%Y-%m-%d'))
-
-listing_all_df.drop_duplicates(['short_job_link'],keep="last",inplace=True)
-listing_all_df.reset_index(drop=True,inplace=True)
-listing_all_df['Today_Date'] = str(date.today())
-listing_all_df['Today_Date'] = pd.to_datetime(listing_all_df['Today_Date'])
-listing_all_df['Days_to_close'] = listing_all_df['closing_date'] - listing_all_df['Today_Date']
-listing_all_df['active_inactive'] = listing_all_df['Days_to_close'].apply(lambda x: active_inactive(x))
-
-listing_all_df['salary_range_'] = listing_all_df['salary'].apply(lambda x: salary_check(x))
-listing_all_df[['salary_range_start','salary_range_end']] = pd.DataFrame(listing_all_df.salary_range_.tolist(), index= listing_all_df.index)
-del listing_all_df['salary_range_']
-listing_all_df['salary_range_start'] = listing_all_df['salary_range_start'].replace('Depends on experience','-')
-listing_all_df['salary_range_end'] = listing_all_df['salary_range_end'].replace('Depends on experience','-')
-print("Starting with Active File")
-active_jobs = listing_all_df[listing_all_df['active_inactive']=='active']
-active_jobs_ = active_jobs[['Role','salary','closing_date','job_code','Today_Date','Days_to_close', 'active_inactive', 'salary_range_start','salary_range_end','short_job_link','scrap_date']]
-active_jobs_2 = active_jobs_.merge(jd_master[['job_summary', 'job_discription', 'employer_name',
-       'employer_address', 'employer_post_code', 'employer_website',
-       'contact_person_position', 'contact_person_name',
-       'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
-active_jobs_2.reset_index(drop=True,inplace=True)
-
-print('\n')
-print(active_jobs_2.head())
-print('\n')
-print(active_jobs_2.columns)
-print('\n')
-print(active_jobs_2.shape)
-active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
-push_to_s3("master_data","Active_Jobs")
+active_jobs = update_information(jd_master,listing_all_df)
