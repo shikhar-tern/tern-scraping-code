@@ -10,35 +10,113 @@ nlp = spacy.load("en_core_web_sm")
 import numpy as np
 import warnings
 from difflib import get_close_matches
+import boto3
+from botocore.exceptions import ClientError
+import botocore
+import s3fs as s3
 warnings.filterwarnings('ignore')
 
+def specialisation_list(x):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)
+    
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking Active_Jobs
+    filt_list = [item for item in filtered_list if item == 'Final_Speciality.xlsx']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
+
+def active_jobs_list(x):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)
+    
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking Active_Jobs
+    filt_list = [item for item in filtered_list if item == 'Active_Jobs.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
+
+def active_jobs_df(x):
+    specific_files = specialisation_list(x)
+    active_jobs_df = pd.DataFrame()
+    for file in specific_files:
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_excel(obj['Body'])
+        active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
+    return active_jobs_df
+
+def specialisation_list_df_list(x, sheet_name='Sheet1'):
+    specific_files = specialisation_list(x)
+    active_jobs_df = pd.DataFrame()
+    for file in specific_files:
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_excel(obj['Body'], sheet_name=sheet_name)
+        active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
+    active_job_list = list(active_jobs_df[sheet_name].unique())
+    return active_job_list
+
+def specialisation_list_df(x, sheet_name='Sheet1'):
+    specific_files = specialisation_list(x)
+    active_jobs_df = pd.DataFrame()
+    for file in specific_files:
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_excel(obj['Body'], sheet_name=sheet_name)
+        active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
+    return active_jobs_df
+
+def push_to_s3(x,y):
+    print(f'Pushing {y} to s3 bucket in {x}')
+    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
+    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
+    #push to bucket
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
+    print(f'{y} pushed to bucket in {x}')
+
 #active_Jobs
-active_jobs = pd.read_csv(r'C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Active_Jobs.csv')
+active_jobs = active_jobs_df('master_data')
 active_jobs['Role_'] = active_jobs['Role'].str.replace("-"," - ").str.replace("/"," / ").str.replace('*'," ").str.replace(","," , ").str.replace("'","").str.replace('–',' – ')
 
 #other_keywords
-administration_keywords = list(pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="Admin_Keywords")['Admin_Keywords'].unique())
-healthcare_keywords = list(pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="HCA_Keywords")['HCA_Keywords'].unique())
-engineer_keywords = list(pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="Engineer_Keywords")['Engineer_Keywords'].unique())
+administration_keywords = specialisation_list_df_list('master_data','Admin_Keywords')
+healthcare_keywords = specialisation_list_df_list('master_data','HCA_Keywords')
+engineer_keywords = specialisation_list_df_list('master_data','Engineer_Keywords')
 
 #speciality_list
-final_speciality = pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="Final_Speciality")
+final_speciality = specialisation_list_df('master_data','Final_Speciality')
 final_speciality['Speciality_Lower'] = final_speciality['Specialties'].apply(lambda x: str(x).lower().strip())
 final_speciality.rename(columns={'Category':"Major Specialisation",'Specialties':"Specialisation","Speciality_Lower":"Specialisation_Lower"},inplace=True)
 
 ##### AHP
-ahp_df = pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="AHP_Keywords")
+ahp_df = specialisation_list_df('master_data','AHP_Keywords')
 ahp_df['Speciality_2'] = ahp_df['Speciality'].str.split(',')
 ahp_df = ahp_df.explode('Speciality_2').reset_index(drop=True)
 ahp_df['Speciality_Lower'] = ahp_df['Speciality_2'].apply(lambda x: str(x).lower().strip())
 ahp_df.rename(columns={"Major Speciality":'Major Specialisation','Speciality_2':'Specialisation','Speciality_Lower':"Specialisation_Lower"},inplace=True)
 
 #nurse_speciality
-nurse_final_speciality = pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="Nurse_Keywords")
+nurse_final_speciality = specialisation_list_df('master_data','Nurse_Keywords')
 nurse_final_speciality['Specialisation_Lower'] = nurse_final_speciality['Specialisation'].apply(lambda x: str(x).lower().strip())
 
 #keywords_for_doctors
-keyword_list_1 = list(pd.read_excel(r"C:/Users/admin/Desktop/Safal Work/multi-threading/Masters/Final_Speciality.xlsx",sheet_name="Doctor_Keywords")['Doctor_Keywords'].unique())
+keyword_list_1 = specialisation_list_df_list('master_data','Doctor_Keywords')
 
 ### Nurse
 def nurse_classification(x,y):
@@ -320,7 +398,8 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2['Major Specialisation'].fillna("",inplace=True)
     active_jobs_final_2['Specialisation'].fillna("",inplace=True)
     active_jobs_final_2.loc[(active_jobs_final_2['Final_Tag']=='') & ((active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctor')) | active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctors')),'Final_Tag'] = 'Doctor'
-    active_jobs_final_2.to_excel(r"C:\Users\admin\Desktop\Safal Work\multi-threading\Masters/Active_Jobs_With_Categorisation.xlsx")
+    active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
+    push_to_s3('master_data','Active_Jobs_with_categorisation')
     return active_jobs_final_2
 
 active_jobs_final_2 = final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df)
