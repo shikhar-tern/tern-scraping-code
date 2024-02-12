@@ -55,7 +55,7 @@ def active_jobs_df(x):
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_excel(obj['Body'])
+        dd = pd.read_csv(obj['Body'])
         active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
     return active_jobs_df
 
