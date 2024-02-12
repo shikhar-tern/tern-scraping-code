@@ -95,28 +95,28 @@ active_jobs = active_jobs_df('master_data')
 active_jobs['Role_'] = active_jobs['Role'].str.replace("-"," - ").str.replace("/"," / ").str.replace('*'," ").str.replace(","," , ").str.replace("'","").str.replace('–',' – ')
 
 #other_keywords
-administration_keywords = specialisation_list_df_list('master_data','Admin_Keywords')
-healthcare_keywords = specialisation_list_df_list('master_data','HCA_Keywords')
-engineer_keywords = specialisation_list_df_list('master_data','Engineer_Keywords')
+administration_keywords = specialisation_list_df_list('master_data', sheet_name='Admin_Keywords')
+healthcare_keywords = specialisation_list_df_list('master_data', sheet_name='HCA_Keywords')
+engineer_keywords = specialisation_list_df_list('master_data', sheet_name='Engineer_Keywords')
 
 #speciality_list
-final_speciality = specialisation_list_df('master_data','Final_Speciality')
+final_speciality = specialisation_list_df('master_data',sheet_name='Final_Speciality')
 final_speciality['Speciality_Lower'] = final_speciality['Specialties'].apply(lambda x: str(x).lower().strip())
 final_speciality.rename(columns={'Category':"Major Specialisation",'Specialties':"Specialisation","Speciality_Lower":"Specialisation_Lower"},inplace=True)
 
 ##### AHP
-ahp_df = specialisation_list_df('master_data','AHP_Keywords')
+ahp_df = specialisation_list_df('master_data',sheet_name='AHP_Keywords')
 ahp_df['Speciality_2'] = ahp_df['Speciality'].str.split(',')
 ahp_df = ahp_df.explode('Speciality_2').reset_index(drop=True)
 ahp_df['Speciality_Lower'] = ahp_df['Speciality_2'].apply(lambda x: str(x).lower().strip())
 ahp_df.rename(columns={"Major Speciality":'Major Specialisation','Speciality_2':'Specialisation','Speciality_Lower':"Specialisation_Lower"},inplace=True)
 
 #nurse_speciality
-nurse_final_speciality = specialisation_list_df('master_data','Nurse_Keywords')
+nurse_final_speciality = specialisation_list_df('master_data',sheet_name='Nurse_Keywords')
 nurse_final_speciality['Specialisation_Lower'] = nurse_final_speciality['Specialisation'].apply(lambda x: str(x).lower().strip())
 
 #keywords_for_doctors
-keyword_list_1 = specialisation_list_df_list('master_data','Doctor_Keywords')
+keyword_list_1 = specialisation_list_df_list('master_data', sheet_name='Doctor_Keywords')
 
 ### Nurse
 def nurse_classification(x,y):
