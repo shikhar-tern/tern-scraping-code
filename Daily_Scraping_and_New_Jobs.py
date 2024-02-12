@@ -13,7 +13,6 @@ from datetime import timedelta
 import multiprocessing as mp
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
-import time
 import threading
 from io import StringIO
 import json
@@ -292,6 +291,7 @@ def extract_data(response, url):
         about_us_list = []
         job_discription_list = []
         date_posted_list = []
+        band_list = []
         job_reference_number_list = []
         qualification_essentials_list = []
         qualification_desirable_list = []
@@ -355,6 +355,13 @@ def extract_data(response, url):
             date_posted_list.append(date_posted)
         except:
             date_posted_list.append('-')
+
+        #band
+        try:
+            band = soup.find('p',id='payscheme-band').text
+            band_list.append(band)
+        except:
+            band_list.append('-')
         
         #job_reference_number
         try:
@@ -498,6 +505,7 @@ def extract_data(response, url):
         about_us_list,
         job_discription_list,
         date_posted_list,
+        band_list,
         job_reference_number_list,
         qualification_essentials_list,
         qualification_desirable_list,
@@ -521,6 +529,7 @@ def extract_data(response, url):
         'about_us',
         'job_discription',
         'date_posted',
+        'band',
         'job_reference_number',
         'qualification_essentials',
         'qualification_desirable',
@@ -547,6 +556,7 @@ def extract_data(response, url):
         about_us_list = ['-']
         job_discription_list = ['-']
         date_posted_list = ['-']
+        band_list = ['-']
         job_reference_number_list = ['-']
         qualification_essentials_list = ['-']
         qualification_desirable_list = ['-']
@@ -571,6 +581,7 @@ def extract_data(response, url):
         about_us_list,
         job_discription_list,
         date_posted_list,
+        band_list,
         job_reference_number_list,
         qualification_essentials_list,
         qualification_desirable_list,
@@ -594,6 +605,7 @@ def extract_data(response, url):
         'about_us',
         'job_discription',
         'date_posted',
+        'band',
         'job_reference_number',
         'qualification_essentials',
         'qualification_desirable',
@@ -1081,246 +1093,85 @@ def pull_active_jobs_append_new_job_list(x,new_job):
     active_job_list = list(set(active_jobs_df['short_job_link'].unique())) + list(set(new_job['short_job_link']))
     return active_job_list
 
-def update_information(link,job_lists):
-    print(f"Started with: {link}")
-    # job_lists = list(listing_page_master['short_job_link'].unique())
-    a = listing_page_master[listing_page_master['short_job_link']==link].sort_values('scrap_date')
-    b = jd_master[jd_master['short_job_link']==link].sort_values('scraped_date')
-    
-    if len(a) == 1  and (list(a['scrap_date'])[0] in list(b['scraped_date'])):
-        c = a[['Role','salary','closing_date', 'job_code', 'short_job_link','scrap_date']].merge(b[['scraped_date','date_posted']],left_on='scrap_date',right_on='scraped_date',how='outer') #<---- check how
-        c['Role'] = c['Role'].fillna(method='ffill')
-        c['salary'] = c['salary'].fillna(method='ffill')
-        c['closing_date'] = c['closing_date'].fillna(method='ffill')
-        c['job_code'] = c['job_code'].fillna(method='ffill')
-        c['short_job_link'] = c['short_job_link'].fillna(method='ffill')
-        c['scrap_date'] = c['scrap_date'].fillna(method='ffill')
-
-        # Assuming df is your DataFrame
-        c['scraped_date'] = c['scraped_date'].fillna(method='ffill')
-        c['date_posted'] = c['date_posted'].fillna(method='ffill')
-
-        c['Today_Date'] = str(date.today())
-        c['Today_Date'] = pd.to_datetime(c['Today_Date'])
-
-        #days to close
-        c['Days_to_close'] = c['closing_date'] - c['Today_Date']
-
-        #job_active_inactive_flag
-        c['active_inactive'] = c['Days_to_close'].apply(lambda x: active_inactive(x))
-
-        #Latested date of update
-        c['Updated_on'] = str(max(c['scraped_date']).date())
-
-        c['salary_changed'] = c['salary'] != c['salary'].shift(1)
-
-        c['latest_salary'] = c['salary'].where(c['salary_changed'], None)
-
-        c['salary_change_date'] = c['scrap_date'].where(c['salary_changed'], pd.NaT)
-
-        # Fill NaN values in 'latest_salary' and 'salary_change_date'
-        c['latest_salary'] = c['latest_salary'].ffill()
-        c['salary_change_date'] = c['salary_change_date'].ffill()
-
-        c = c.drop(columns=['salary_changed'])
-
-        print(f"{job_lists.index(link)} done out of {len(job_lists)}")
-
-        return c
-
-    elif (len(a)==1) and (list(a['scrap_date'])[0] not in list(b['scraped_date'])):
-        c = a[['Role','salary','closing_date', 'job_code', 'short_job_link','scrap_date']].merge(b[['scraped_date','date_posted']],left_on='scrap_date',right_on='scraped_date',how='outer') #<---- check how
-        c['Role'] = c['Role'].fillna(method='ffill')
-        c['salary'] = c['salary'].fillna(method='ffill')
-        c['closing_date'] = c['closing_date'].fillna(method='ffill')
-        c['job_code'] = c['job_code'].fillna(method='ffill')
-        c['short_job_link'] = c['short_job_link'].fillna(method='ffill')
-        c['scrap_date'] = c['scrap_date'].fillna(method='ffill')
-
-        # Assuming df is your DataFrame
-        c['scraped_date'] = c['scraped_date'].fillna(c['scrap_date'])
-        c['date_posted'] = c['date_posted'].fillna(method='bfill')
-
-        c['Today_Date'] = str(date.today())
-        c['Today_Date'] = pd.to_datetime(c['Today_Date'])
-
-        #days to close
-        c['Days_to_close'] = c['closing_date'] - c['Today_Date']
-
-        #job_active_inactive_flag
-        c['active_inactive'] = c['Days_to_close'].apply(lambda x: active_inactive(x))
-
-        #Latested date of update
-        c['Updated_on'] = str(max(c['scraped_date']).date())
-
-        c['salary_changed'] = c['salary'] != c['salary'].shift(1)
-
-        c['latest_salary'] = c['salary'].where(c['salary_changed'], None)
-
-        c['salary_change_date'] = c['scrap_date'].where(c['salary_changed'], pd.NaT)
-
-        # Fill NaN values in 'latest_salary' and 'salary_change_date'
-        c['latest_salary'] = c['latest_salary'].ffill()
-        c['salary_change_date'] = c['salary_change_date'].ffill()
-
-        c = c.drop(columns=['salary_changed'])
-
-        print(f"{job_lists.index(link)} done out of {len(job_lists)}")
-
-        return c
-
-    elif (len(a)>1) and (len(b)==0):
-        c = a[['Role','salary','closing_date', 'job_code', 'short_job_link','scrap_date']].merge(b[['scraped_date','date_posted']],left_on='scrap_date',right_on='scraped_date',how='left') #<---- check how
-        # Assuming df is your DataFrame
-        c['scraped_date'] = c['scraped_date'].fillna(method='ffill')
-        c['date_posted'] = c['date_posted'].fillna(method='ffill')
-
-        c['Today_Date'] = str(date.today())
-        c['Today_Date'] = pd.to_datetime(c['Today_Date'])
-
-        #days to close
-        c['Days_to_close'] = c['closing_date'] - c['Today_Date']
-
-        #job_active_inactive_flag
-        c['active_inactive'] = c['Days_to_close'].apply(lambda x: active_inactive(x))
-
-        #Latested date of update
-        c['Updated_on'] = str(max(c['scrap_date']).date())
-
-        c['salary_changed'] = c['salary'] != c['salary'].shift(1)
-
-        c['latest_salary'] = c['salary'].where(c['salary_changed'], None)
-
-        c['salary_change_date'] = c['scrap_date'].where(c['salary_changed'], pd.NaT)
-
-        # Fill NaN values in 'latest_salary' and 'salary_change_date'
-        c['latest_salary'] = c['latest_salary'].ffill()
-        c['salary_change_date'] = c['salary_change_date'].ffill()
-
-        c = c.drop(columns=['salary_changed'])
-
-        print(f"{job_lists.index(link)} done out of {len(job_lists)}")
-
-        return c
-
-    elif (len(a)>1) and (any(elem in list(b['scraped_date']) for elem in list(a['scrap_date']))):
-        c = a[['Role','salary','closing_date', 'job_code', 'short_job_link','scrap_date']].merge(b[['scraped_date','date_posted']],left_on='scrap_date',right_on='scraped_date',how='left') #<---- check how
-        # Assuming df is your DataFrame
-        c['scraped_date'] = c['scraped_date'].fillna(c['scrap_date'])
-        c['date_posted'] = c['date_posted'].fillna(method='bfill')
-
-        c['Today_Date'] = str(date.today())
-        c['Today_Date'] = pd.to_datetime(c['Today_Date'])
-
-        #days to close
-        c['Days_to_close'] = c['closing_date'] - c['Today_Date']
-
-        #job_active_inactive_flag
-        c['active_inactive'] = c['Days_to_close'].apply(lambda x: active_inactive(x))
-
-        #Latested date of update
-        c['Updated_on'] = str(max(c['scraped_date']).date())
-
-        c['salary_changed'] = c['salary'] != c['salary'].shift(1)
-
-        c['latest_salary'] = c['salary'].where(c['salary_changed'], None)
-
-        c['salary_change_date'] = c['scrap_date'].where(c['salary_changed'], pd.NaT)
-
-        # Fill NaN values in 'latest_salary' and 'salary_change_date'
-        c['latest_salary'] = c['latest_salary'].ffill()
-        c['salary_change_date'] = c['salary_change_date'].ffill()
-
-        c = c.drop(columns=['salary_changed'])
-
-        print(f"{job_lists.index(link)} done out of {len(job_lists)}")
-
-        return c
-
-    elif (len(a)>1) and (len(b)>=1) and (any(elem not in list(b['scraped_date']) for elem in list(a['scrap_date']))):
-        c = a[['Role','salary','closing_date', 'job_code', 'short_job_link','scrap_date']].merge(b[['scraped_date','date_posted']],left_on='scrap_date',right_on='scraped_date',how='outer') #<---- check how
-
-        c['Role'] = c['Role'].fillna(method='ffill')
-        c['salary'] = c['salary'].fillna(method='ffill')
-        c['closing_date'] = c['closing_date'].fillna(method='ffill')
-        c['job_code'] = c['job_code'].fillna(method='ffill')
-        c['short_job_link'] = c['short_job_link'].fillna(method='ffill')
-        c['scrap_date'] = c['scrap_date'].fillna(method='ffill')
-        # Assuming df is your DataFrame
-        c['scraped_date'] = c['scraped_date'].fillna(c['scrap_date'])
-        c['date_posted'] = c['date_posted'].fillna(method='bfill')
-
-        c['Today_Date'] = str(date.today())
-        c['Today_Date'] = pd.to_datetime(c['Today_Date'])
-
-        #days to close
-        c['Days_to_close'] = c['closing_date'] - c['Today_Date']
-
-        #job_active_inactive_flag
-        c['active_inactive'] = c['Days_to_close'].apply(lambda x: active_inactive(x))
-
-        #Latested date of update
-        c['Updated_on'] = str(max(c['scraped_date']).date())
-
-        c['salary_changed'] = c['salary'] != c['salary'].shift(1)
-
-        c['latest_salary'] = c['salary'].where(c['salary_changed'], None)
-
-        c['salary_change_date'] = c['scrap_date'].where(c['salary_changed'], pd.NaT)
-
-        # Fill NaN values in 'latest_salary' and 'salary_change_date'
-        c['latest_salary'] = c['latest_salary'].ffill()
-        c['salary_change_date'] = c['salary_change_date'].ffill()
-
-        c = c.drop(columns=['salary_changed'])
-
-        print(f"{job_lists.index(link)} done out of {len(job_lists)}")
-
-        return c
-
-def process_link(link):
-    new_update = update_information(link,job_lists)
-    return new_update, new_update.tail(1)
-
-start_time = time.time()
-print(str(datetime.now()))
-job_updates = pd.DataFrame()
-latest_job_updates = pd.DataFrame()
-if __name__ == '__main__':
-    # Define the URLs
-    job_lists = pull_active_jobs_append_new_job_list('master_data',new_job)
-
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = list(executor.map(process_link, job_lists))
-        
-        for i, (new_update, latest_update) in enumerate(results):
-            if new_update is not None and latest_update is not None:
-                job_updates = pd.concat([job_updates, new_update], axis=0, ignore_index=True)
-                latest_job_updates = pd.concat([latest_job_updates, latest_update], axis=0, ignore_index=True)
-                print(f"Result {i + 1} processed and appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-
-    job_updates.to_csv(r"/home/ec2-user/scrape_data/master_data/Job_Information_Full_Updated_Master.csv",index=False)
-    latest_job_updates.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
-    jd_latest = jd_master[jd_master['scraped_date']==max(jd_master['scraped_date'])]
-    active_job = latest_job_updates[latest_job_updates['active_inactive']=='active']
-    df_fin = active_job.merge(jd_latest[['job_summary', 'job_discription', 'employer_name',
-       'employer_address', 'employer_post_code', 'employer_website',
-       'contact_person_position', 'contact_person_name',
-       'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
-    df_fin.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
-
-    push_to_s3("master_data","Job_Information_Full_Updated_Master")
-    push_to_s3("master_data","Latest_Updated_Master")  
-    push_to_s3("master_data","Active_Jobs")        
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
+def pulling_list_from_s3(x,y):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)  
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking listing_file
+    filt_list = [item for item in filtered_list if item == f'{y}.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
+
+def fetching_df(x,y):
+    old_listing_data = pd.DataFrame()
+    specific_files = pulling_list_from_s3(x,y)
+    for file in specific_files:
+        #load from bucket
+        s3 = boto3.resource("s3")
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'])
+        old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
+    return old_listing_data
+
+def update_information(jd_master,listing_page_master):
+    start_time = time.time()
+    # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+    ### Update Code
+    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
+    # Assuming 'closing_date' is the column with date strings
+    jd_master['date_posted'] = pd.to_datetime(
+        jd_master['date_posted'], 
+        infer_datetime_format=True, 
+        errors='coerce')
+    jd_master.drop_duplicates('short_job_link',keep='last',inplace=True)
+    jd_master.reset_index(drop=True,inplace=True)
+    # Convert the datetime column to the desired 'yyyy-mm-dd' format
+    jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'].dt.strftime('%Y-%m-%d'))
+    listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'])
+    # Assuming 'closing_date' is the column with date strings
+    listing_all_df['closing_date'] = pd.to_datetime(
+        listing_all_df['closing_date'], 
+        infer_datetime_format=True, 
+        errors='coerce')
+    # Convert the datetime column to the desired 'yyyy-mm-dd' format
+    listing_all_df['closing_date'] = pd.to_datetime(listing_all_df['closing_date'].dt.strftime('%Y-%m-%d'))
+    listing_all_df.drop_duplicates(['short_job_link'],keep="last",inplace=True)
+    listing_all_df.reset_index(drop=True,inplace=True)
+    listing_all_df['Today_Date'] = str(date.today())
+    listing_all_df['Today_Date'] = pd.to_datetime(listing_all_df['Today_Date'])
+    listing_all_df['Days_to_close'] = listing_all_df['closing_date'] - listing_all_df['Today_Date']
+    listing_all_df['active_inactive'] = listing_all_df['Days_to_close'].apply(lambda x: active_inactive(x))                                             
+    listing_all_df['salary_range_'] = listing_all_df['salary'].apply(lambda x: salary_check(x))
+    listing_all_df[['salary_range_start','salary_range_end']] = pd.DataFrame(listing_all_df.salary_range_.tolist(), index= listing_all_df.index)
+    del listing_all_df['salary_range_']
+    listing_all_df['salary_range_start'] = listing_all_df['salary_range_start'].replace('Depends on experience','-')
+    listing_all_df['salary_range_end'] = listing_all_df['salary_range_end'].replace('Depends on experience','-')
+    print("Starting with Active File")
+    active_jobs = listing_all_df[listing_all_df['active_inactive']=='active']
+    active_jobs_ = active_jobs[['Role','salary','closing_date','job_code','Today_Date','Days_to_close', 'active_inactive', 'salary_range_start','salary_range_end','short_job_link','scrap_date']]
+    active_jobs_2 = active_jobs_.merge(jd_master[['job_summary', 'job_discription','band', 'employer_name',
+        'employer_address', 'employer_post_code', 'employer_website',
+        'contact_person_position', 'contact_person_name',
+        'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
+    active_jobs_2.reset_index(drop=True,inplace=True)
+    active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
+    listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
+    push_to_s3("master_data","Active_Jobs")
+    push_to_s3("master_data","Latest_Updated_Master") 
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Time taken to create Active Jobs: {duration/60} mintues")
+    return active_jobs_2
+
+jd_master = jd_master_df('job_information_updated','jd_page_data')
+listing_all_df = fetching_df('master_data','Listing_Page_Master')
+active_jobs = update_information(jd_master,listing_all_df)
 
 ### categorisation
 def remove_roll_extract_elements(text, phrase_matcher):
