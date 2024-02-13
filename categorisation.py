@@ -44,12 +44,12 @@ def active_jobs_df(x):
     return active_jobs_df
 
 def specialisation_list_df_list(x,y):
-    df = pd.read_excel(r"/home/ec2-user/tern-scraping-code/{}.xlsx".format(x),sheet_name=y)
+    df = pd.read_excel(r"/home/ec2-user/scrape_data/master_data/{}.xlsx".format(x),sheet_name=y)
     df_list = list(df[y].unique())
     return df_list
 
 def specialisation_list_df(x,y):
-    df = pd.read_excel(r"/home/ec2-user/tern-scraping-code/{}.xlsx".format(x),sheet_name=y)
+    df = pd.read_excel(r"/home/ec2-user/scrape_data/master_data/{}.xlsx".format(x),sheet_name=y)
     return df
 
 def push_to_s3(x,y):
