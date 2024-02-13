@@ -1134,7 +1134,7 @@ def fetching_df(x,y):
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     return old_listing_data
 
-def update_information(jd_master,listing_page_master):
+def update_information(jd_master,listing_all_df):
     start_time = time.time()
     # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
     ### Update Code
