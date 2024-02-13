@@ -189,7 +189,7 @@ def jd_master_df(a,b):
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
-def update_information(jd_master,listing_page_master):
+def update_information(jd_master,listing_all_df):
     start_time = time.time()
     # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
     ### Update Code
