@@ -98,3 +98,40 @@ def email_people(email_cred, df):
     print("Email sent successfully!")
 
 email_people(email_cred,df)
+
+# ---------------------------------------------------------------------------------------------------------------------
+#Email with Just Text
+def email_people(email_cred, x):
+    # Email configuration
+    sender_email = email_cred['email']
+    sender_password = email_cred['password']
+    receiver_email = ["shikharrajput@gmail.com"]
+    subject = f"{x} Pushed to S3 on {str(date.today())}"
+    # Create the email body with a formatted table
+    body = f"""
+    <html>
+    <body>
+      <p>Hi,</p>
+
+      <p> {x} Pushed to S3 on {str(date.today())} </p>
+
+      <p>PFA.</p>
+
+      <p>Best regards,<br>Your Name</p>
+    </body>
+    </html>
+    """  
+    # Create the email message
+    message = MIMEMultipart()
+    message.attach(MIMEText(body, 'html'))
+    # Set up the SSL context
+    context = ssl.create_default_context()
+    # Connect to the SMTP server and send the email
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+    with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+    print("Email sent successfully!")
+
+email_people(email_cred,df)
