@@ -112,12 +112,8 @@ def email_people(email_cred, x):
     <html>
     <body>
       <p>Hi,</p>
-
-      <p> {x} Pushed to S3 on {str(date.today())} </p>
-
-      <p>PFA.</p>
-
-      <p>Best regards,<br>Your Name</p>
+      <p>{x} pushed to S3 on {str(date.today())}. </p>
+      <p></p>
     </body>
     </html>
     """  
@@ -134,4 +130,4 @@ def email_people(email_cred, x):
         server.sendmail(sender_email, receiver_email, message.as_string())
     print("Email sent successfully!")
 
-email_people(email_cred,df)
+email_people(email_cred,"Listing_Page")
