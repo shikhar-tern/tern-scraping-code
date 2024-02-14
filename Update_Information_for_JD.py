@@ -23,6 +23,14 @@ from botocore.exceptions import ClientError
 import botocore
 import s3fs as s3
 
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from email.message import EmailMessage
+import ssl
+
 # sys.stdout = open(r'/home/ec2-user/tern-scraping-code/log.txt','w')
 
 def fixing_job_ref(code):
@@ -506,6 +514,12 @@ def jd_page_push_to_s3(x,y):
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
 
+# Specify the path to your JSON file
+file_path = r"/home/ec2-user/tern-scraping-code/email_credentials.json"
+
+# Read the JSON file and convert it to a dictionary
+with open(file_path, 'r') as json_file:
+    email_cred = json.load(json_file)
 
 start_time = time.time()
 print(str(datetime.now()))
@@ -591,9 +605,39 @@ end_time = time.time()
 duration = end_time - start_time
 print(f"Time taken: {duration/60} mintues")
 
+def email_people(email_cred, x):
+    # Email configuration
+    sender_email = email_cred['email']
+    sender_password = email_cred['password']
+    receiver_email = ["shikharrajput@gmail.com"]
+    subject = f"{x} Pushed to S3 on {str(date.today())}"
+    # Create the email body with a formatted table
+    body = f"""
+    <html>
+    <body>
+      <p>Hi,</p>
+      <p>{x} pushed to S3 on {str(date.today())}. </p>
+      <p></p>
+    </body>
+    </html>
+    """  
+    # Create the email message
+    message = MIMEMultipart()
+    message.attach(MIMEText(body, 'html'))
+    # Set up the SSL context
+    context = ssl.create_default_context()
+    # Connect to the SMTP server and send the email
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+    with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+    print("Email sent successfully!")
+
 def concat_df(x,y,z):
     df = pd.concat([x,y,z],axis=0,ignore_index=False)
     df.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_{}.csv".format(str(date.today())),index=False)
     jd_page_push_to_s3("job_information_updated",f"job_information_updated_{str(date.today())}")
+    email_people(email_cred,"Job Information Update")
     return df
 df_fin = concat_df(df_jd,df_jd_1,df_jd_2)
