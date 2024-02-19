@@ -1115,34 +1115,6 @@ def active_inactive(x):
     else:
         return 'active'
 
-def active_job_data_list(x):
-    s3 = boto3.resource("s3")
-    s3_bucket = s3.Bucket("nhs-dataset")
-    dir = x
-    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
-    # Remove the 0th element
-    files_in_s3.pop(0)
-    
-    # Flatten the remaining nested lists
-    flat_list = [item for sublist in files_in_s3 for item in sublist]
-    filtered_list = [item for item in flat_list if item != '']
-    #Only picking listing_file
-    filt_list = [item for item in filtered_list if item == 'Active_Jobs.csv']
-    prefixed_list = [f'{x}/' + item for item in filt_list]
-    return prefixed_list
-
-def pull_active_jobs_append_new_job_list(x,new_job):
-    specific_files = active_job_data_list(x)
-    active_jobs_df = pd.DataFrame()
-    for file in specific_files:
-        s3 = boto3.resource("s3")
-        #load from bucket
-        obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'])
-        active_jobs_df = pd.concat([active_jobs_df,dd],axis=0,ignore_index=True)
-    active_job_list = list(set(active_jobs_df['short_job_link'].unique())) + list(set(new_job['short_job_link']))
-    return active_job_list
-
 def salary_check(x):
     x = x.replace(' to ',' ').replace(' a year','').replace('£','').replace(',','').replace(' an hour','').split(' ')
     if len(x) == 1:
@@ -1234,7 +1206,7 @@ def update_information(jd_master,listing_all_df):
     print(f"Time taken to create Active Jobs: {duration/60} mintues")
     return active_jobs_2
 
-jd_master = jd_master_df('job_information_updated','jd_page_data')
+jd_master = jd_master_df('job_information_updated','jd_page_data') 
 listing_all_df = fetching_df('master_data','Listing_Page_Master')
 active_jobs = update_information(jd_master,listing_all_df)
 
