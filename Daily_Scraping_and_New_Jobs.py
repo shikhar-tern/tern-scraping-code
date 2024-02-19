@@ -1024,6 +1024,7 @@ def jd_master_df(a,b):
     specific_files = jd_data_list(a)
     jd_master = pd.DataFrame()
     for file in specific_files:
+        print(f'Starting with: {file}')
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
@@ -1039,8 +1040,11 @@ def jd_master_df(a,b):
         dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
         dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
         jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+        print(f'Done with: {file}')
+    print('------------------------------------------')
     specific_files = data_list(b)
     for file in specific_files:
+        print(f'Starting with: {file}')
         s3 = boto3.resource("s3")
         #load from bucket
         obj = s3.Bucket('nhs-dataset').Object(file).get()
@@ -1052,6 +1056,7 @@ def jd_master_df(a,b):
             dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
             dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
             jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+            print(f'Done with: {file}')
         else:
             dd['job_url'] = dd['job_url_hit']
             dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
@@ -1060,6 +1065,8 @@ def jd_master_df(a,b):
             dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
             dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
             jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+            print(f'Done with: {file}')
+    print('------------------------------------------')
     del jd_master['page_number']
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
     # push_to_s3("master_data","Jobs_Information_Master")
