@@ -609,7 +609,7 @@ def email_people(email_cred, x):
     # Email configuration
     sender_email = email_cred['email']
     sender_password = email_cred['password']
-    receiver_email = ["shikharrajput@gmail.com"]
+    receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com","ashita@tern-group.com"]
     subject = f"{x} Pushed to S3 on {str(date.today())}"
     # Create the email body with a formatted table
     body = f"""
