@@ -128,8 +128,8 @@ def jd_data_list(x):
     filtered_list = [item for item in flat_list if item != '']
     prefixed_list = [f'{x}/' + item for item in filtered_list]
     # pattern = re.compile(r'/job_information_updated_\d{4}-\d{2}-\d{2}\.csv$')
-    filtered_list_2 = [element for element in prefixed_list if pattern.search(element)]
-    return filtered_list_2
+    # filtered_list_2 = [element for element in prefixed_list if pattern.search(element)]
+    return prefixed_list
 
 
 def push_to_s3(x,y):
