@@ -521,89 +521,6 @@ file_path = r"/home/ec2-user/tern-scraping-code/email_credentials.json"
 with open(file_path, 'r') as json_file:
     email_cred = json.load(json_file)
 
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists[:5000])
-        for i, result in enumerate(results):
-            if result is not None:
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd = pd.concat(results_list,ignore_index=True)
-    df_jd.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd['job_reference_number'] = df_jd['job_reference_number'].astype('string').apply(lambda x: fixing_job_ref(x))
-    df_jd.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_0_5000_{}.csv".format(str(date.today())),index=False)
-    jd_page_push_to_s3("job_information_updated",f"job_information_updated_0_5000_{str(date.today())}")
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists[5000:10000])
-        for i, result in enumerate(results):
-            if result is not None:
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd_1 = pd.concat(results_list,ignore_index=True)
-    df_jd_1.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_1['job_reference_number'] = df_jd_1['job_reference_number'].astype('string').apply(lambda x: fixing_job_ref(x))
-    df_jd_1.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_5000_10000_{}.csv".format(str(date.today())),index=False)
-    jd_page_push_to_s3("job_information_updated",f"job_information_updated_5000_10000_{str(date.today())}")
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
-
-start_time = time.time()
-print(str(datetime.now()))
-if __name__ == '__main__':
-    # Define the URLs
-    jd_lists = update_these_links
-    results_list = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-        # Submit the scraping function to the executor for each page number
-        results = executor.map(scrape_jd_page, jd_lists[10000:])
-        for i, result in enumerate(results):
-            if result is not None:
-                results_list.append(result)                      
-                print(f"Result {i + 1} appended")
-            else:
-                print(f"Result {i + 1} is None. Skipping...")
-    print("All results processed.")
-    print("Creating DataFrame...")    
-    # Create a DataFrame from the results
-    df_jd_2 = pd.concat(results_list,ignore_index=True)
-    df_jd_2.rename(columns={"job_url":'job_url_hit'},inplace=True)
-    df_jd_2['job_reference_number'] = df_jd_2['job_reference_number'].astype('string').apply(lambda x: fixing_job_ref(x))
-    df_jd_2.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_10000_more_{}.csv".format(str(date.today())),index=False)
-    jd_page_push_to_s3("job_information_updated",f"job_information_updated_10000_more_{str(date.today())}")
-end_time = time.time()
-duration = end_time - start_time
-print(f"Time taken: {duration/60} mintues")
 
 def email_people(email_cred, x):
     # Email configuration
@@ -634,10 +551,33 @@ def email_people(email_cred, x):
         server.sendmail(sender_email, receiver_email, message.as_string())
     print("Email sent successfully!")
 
-def concat_df(x,y,z):
-    df = pd.concat([x,y,z],axis=0,ignore_index=False)
-    df.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_{}.csv".format(str(date.today())),index=False)
+start_time = time.time()
+print(str(datetime.now()))
+if __name__ == '__main__':
+    # Define the URLs
+    jd_lists = update_these_links
+    results_list = []
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
+        # Submit the scraping function to the executor for each page number
+        results = executor.map(scrape_jd_page, jd_lists[:5000])
+        for i, result in enumerate(results):
+            if result is not None:
+                results_list.append(result)                      
+                print(f"Result {i + 1} appended")
+            else:
+                print(f"Result {i + 1} is None. Skipping...")
+    print("All results processed.")
+    print("Creating DataFrame...")    
+    # Create a DataFrame from the results
+    df_jd = pd.concat(results_list,ignore_index=True)
+    df_jd.rename(columns={"job_url":'job_url_hit'},inplace=True)
+    df_jd['job_reference_number'] = df_jd['job_reference_number'].astype('string').apply(lambda x: fixing_job_ref(x))
+    df_jd.to_csv(r"/home/ec2-user/scrape_data/job_information_updated/job_information_updated_{}.csv".format(str(date.today())),index=False)
     jd_page_push_to_s3("job_information_updated",f"job_information_updated_{str(date.today())}")
     email_people(email_cred,"Job Information Update")
-    return df
-df_fin = concat_df(df_jd,df_jd_1,df_jd_2)
+end_time = time.time()
+duration = end_time - start_time
+print(f"Time taken: {duration/60} mintues")
+
+
