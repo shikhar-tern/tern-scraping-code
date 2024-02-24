@@ -1022,7 +1022,7 @@ def push_to_s3(x,y):
 def jd_master_df(a,b):
     print('Starting with Job Description')
     specific_files = jd_data_list(a)
-    jd_master = pd.DataFrame()
+    jd_master_1 = pd.DataFrame()
     for file in specific_files:
         print(f'Starting with: {file}')
         s3 = boto3.resource("s3")
@@ -1039,9 +1039,11 @@ def jd_master_df(a,b):
         dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
         dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
         dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
-        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+        jd_master_1 = pd.concat([jd_master_1,dd],axis=0,ignore_index=True)
+        jd_master_1.ro_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
         print(f'Done with: {file}')
     print('------------------------------------------')
+    jd_master_2 = pd.DataFrame()
     specific_files = data_list(b)
     for file in specific_files:
         print(f'Starting with: {file}')
@@ -1064,14 +1066,16 @@ def jd_master_df(a,b):
             dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
             dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
             dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
-            jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+            jd_master_2 = pd.concat([jd_master_2,dd],axis=0,ignore_index=True)
+            jd_master_2.ro_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
             print(f'Done with: {file}')
     print('------------------------------------------')
-    del jd_master['page_number']
+    del jd_master_1['page_number']
+    del jd_master_2['page_number']
+    jd_master = pd.concat([jd_master_1,jd_master_2],axis=0,ignore_index=True)
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
-
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
 
