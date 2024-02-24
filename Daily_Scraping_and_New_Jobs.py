@@ -1040,7 +1040,7 @@ def jd_master_df(a,b):
         dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
         dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
         jd_master_1 = pd.concat([jd_master_1,dd],axis=0,ignore_index=True)
-        jd_master_1.ro_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
+        jd_master_1.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
         print(f'Done with: {file}')
     print('------------------------------------------')
     jd_master_2 = pd.DataFrame()
@@ -1067,7 +1067,7 @@ def jd_master_df(a,b):
             dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
             dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
             jd_master_2 = pd.concat([jd_master_2,dd],axis=0,ignore_index=True)
-            jd_master_2.ro_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
+            jd_master_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
             print(f'Done with: {file}')
     print('------------------------------------------')
     del jd_master_1['page_number']
