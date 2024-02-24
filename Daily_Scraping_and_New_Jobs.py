@@ -302,7 +302,7 @@ saving_listing_df(final_data)
 end_time = time.time()
 duration = end_time - start_time    
 print(f"Time taken: {duration/60} minutes")
-email_people(email_cred,"Listing Page")
+# email_people(email_cred,"Listing Page")
 
 # ### JD
 
@@ -756,7 +756,7 @@ def new_job_df(x,final_data):
     new_job = final_data[~(final_data['job_code'].isin(list(old_listing_data['job_code'])))].reset_index(drop=True)
     new_job.to_csv(r"/home/ec2-user/scrape_data/new_job_data/new_job_{}.csv".format(str(date.today())),index=False)
     new_job_push_to_s3('new_job_data','new_job',str(date.today()))
-    email_people(email_cred,"New Jobs")
+    # email_people(email_cred,"New Jobs")
     return new_job
 
 
@@ -799,7 +799,7 @@ if __name__ == '__main__':
     jd_push_to_s3('jd_page_data','jd_page_for_new_job',str(date.today()))
 end_time = time.time()
 duration = end_time - start_time
-email_people(email_cred,"JD page for new jobs")
+# email_people(email_cred,"JD page for new jobs")
 print(f"Time taken: {duration/60} mintues")
 
 # #### Master DF
@@ -815,7 +815,7 @@ def master_df(new_job,df_jd):
     master_final = new_job.merge(df_jd,on=['job_url_hit'],how='left')
     master_final.to_csv(r"/home/ec2-user/scrape_data/master_new_job_data/master_new_job_{}.csv".format(str(date.today())),index=False)
     master_push_to_s3('master_new_job_data','master_new_job',str(date.today()))
-    email_people(email_cred,"Master New Jobs")
+    # email_people(email_cred,"Master New Jobs")
     return master_final
 
 master_final = master_df(new_job,df_jd)
@@ -917,7 +917,7 @@ def listing_page_master_df(x):
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
     push_to_s3('master_data','Listing_Page_Master')
-    email_people(email_cred,"Listing Page Master")
+    # email_people(email_cred,"Listing Page Master")
     return old_listing_data
 
 
@@ -946,7 +946,7 @@ def merged_master_df(x):
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Merged_Master.csv",index=False)
     push_to_s3('master_data','Merged_Master')
-    email_people(email_cred,"Merged Master")
+    # email_people(email_cred,"Merged Master")
     return old_listing_data
 
 
@@ -973,7 +973,7 @@ def new_jobs_master_df(x):
     del old_listing_data['keyword']
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/New_Jobs_Master.csv",index=False)
     push_to_s3('master_data','New_Jobs_Master')
-    email_people(email_cred,"New Jobs Master")
+    # email_people(email_cred,"New Jobs Master")
     return old_listing_data
 
 
@@ -1209,7 +1209,7 @@ def update_information(jd_master,listing_all_df):
     push_to_s3("master_data","Latest_Updated_Master") 
     end_time = time.time()
     duration = end_time - start_time
-    email_people(email_cred,"Active Jobs")
+    # email_people(email_cred,"Active Jobs")
     print(f"Time taken to create Active Jobs: {duration/60} mintues")
     return active_jobs_2
 
@@ -1538,7 +1538,7 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2.loc[(active_jobs_final_2['Final_Tag']=='') & ((active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctor')) | active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctors')),'Final_Tag'] = 'Doctor'
     active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
     push_to_s3('master_data','Active_Jobs_with_categorisation')
-    email_people(email_cred,"Active Jobs with categorisation")
+    # email_people(email_cred,"Active Jobs with categorisation")
     return active_jobs_final_2
 
 active_jobs_final_2 = final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df)
