@@ -271,7 +271,7 @@ def email_people(email_cred, x):
     print("Email sent successfully!")
 
 def delete_files(x,j):
-    dir = "'/home/ec2-user/scrape_data'"
+    dir = '/home/ec2-user/scrape_data'
     os.remove(dir+"/"+x+"/"+j)
     print(f"File {j} removed from {x}")
 
