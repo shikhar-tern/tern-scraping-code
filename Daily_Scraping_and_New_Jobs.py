@@ -984,6 +984,49 @@ new_jobs_master = new_jobs_master_df('new_job_data')
 del new_jobs_master
 
 # #### Job Description Master
+def fetch_df_from_s3(file):
+    s3 = boto3.resource("s3")
+    #load from bucket
+    obj = s3.Bucket('nhs-dataset').Object(file).get()
+    dd = pd.read_csv(obj['Body'])
+    return dd
+
+def for_jd_data_list_df(file,dd,jd_master):
+    dd['job_url'] = dd['job_url_hit']
+    df_not_null = dd[(dd['job_url_hit'].notnull())]
+    df_is_null = dd[(dd['job_url_hit'].isnull())]
+    df_is_null['job_url_hit'] = 'https://www.jobs.nhs.uk/candidate/jobadvert/' + df_is_null['job_reference_number']
+    dd = pd.concat([df_not_null,df_is_null],axis=0,ignore_index=True)
+    dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+    dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes_(x))
+    dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+    dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+    dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
+    jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+    print(f'Done with: {file}')
+    return jd_master
+
+def  for_data_list_df(file,dd,jd_master):
+    if 'job_url' in list(dd.columns):
+        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+        dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
+        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+        print(f'Done with: {file}')
+        return jd_master
+    else:
+        dd['job_url'] = dd['job_url_hit']
+        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+        dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
+        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
+        print(f'Done with: {file}')
+        return jd_master
+    
 def extract_job_codes_(link):
     # Define the regex pattern to match the job code
     pattern = r'/jobadvert/([A-Za-z0-9-]+)?'
@@ -1016,7 +1059,6 @@ def jd_data_list(x):
 def push_to_s3(x,y):
     print(f'Pushing {y} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
@@ -1028,54 +1070,20 @@ def jd_master_df(a,b):
     jd_master = pd.DataFrame()
     for file in specific_files:
         print(f'Starting with: {file}')
-        s3 = boto3.resource("s3")
-        #load from bucket
-        obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'])
-        dd['job_url'] = dd['job_url_hit']
-        df_not_null = dd[(dd['job_url_hit'].notnull())]
-        df_is_null = dd[(dd['job_url_hit'].isnull())]
-        df_is_null['job_url_hit'] = 'https://www.jobs.nhs.uk/candidate/jobadvert/' + df_is_null['job_reference_number']
-        dd = pd.concat([df_not_null,df_is_null],axis=0,ignore_index=True)
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes_(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-        dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
-        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-        print(f'Done with: {file}')
+        dd = fetch_df_from_s3(file)
+        jd_master = for_jd_data_list_df(file,dd,jd_master)
     print('------------------------------------------')
     specific_files = data_list(b)
     for file in specific_files:
         print(f'Starting with: {file}')
-        s3 = boto3.resource("s3")
-        #load from bucket
-        obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'])
-        if 'job_url' in list(dd.columns):
-            dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-            dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-            dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-            dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-            dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
-            jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-            print(f'Done with: {file}')
-        else:
-            dd['job_url'] = dd['job_url_hit']
-            dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-            dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-            dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-            dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-            dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
-            jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-            print(f'Done with: {file}')
+        dd = fetch_df_from_s3(file)
+        jd_master = for_data_list_df(file,dd,jd_master)
     print('------------------------------------------')
     del jd_master['page_number']
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
     # delete_files("master_data","Jobs_Information_Master.csv")
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
-
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
 
