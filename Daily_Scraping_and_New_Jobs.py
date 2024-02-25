@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from lxml import html
 import time
 import re
+import os
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
@@ -220,7 +221,6 @@ def short_link(link):
 def listing_push_to_s3(x,y,z):
     print(f'Pushing {y}_{z} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',Key = f'{x}/{y}_{z}.csv')
     print(f'{y}_{z} pushed to bucket in {x}')
@@ -270,6 +270,12 @@ def email_people(email_cred, x):
         server.sendmail(sender_email, receiver_email, message.as_string())
     print("Email sent successfully!")
 
+def delete_files(x,j):
+    dir = "'/home/ec2-user/scrape_data'"
+    os.remove(dir+"/"+x+"/"+j)
+    print(f"File {j} removed from {x}")
+
+
 start_time = time.time()
 print(str(datetime.now()))
 final_data = pd.DataFrame()
@@ -302,6 +308,7 @@ saving_listing_df(final_data)
 end_time = time.time()
 duration = end_time - start_time    
 print(f"Time taken: {duration/60} minutes")
+delete_files("listing_page_data",f"listing_page_all_{str(date.today())}.csv")
 # email_people(email_cred,"Listing Page")
 
 # ### JD
@@ -756,6 +763,7 @@ def new_job_df(x,final_data):
     new_job = final_data[~(final_data['job_code'].isin(list(old_listing_data['job_code'])))].reset_index(drop=True)
     new_job.to_csv(r"/home/ec2-user/scrape_data/new_job_data/new_job_{}.csv".format(str(date.today())),index=False)
     new_job_push_to_s3('new_job_data','new_job',str(date.today()))
+    delete_files("new_job_data",f"new_job_{str(date.today())}.csv")
     # email_people(email_cred,"New Jobs")
     return new_job
 
@@ -766,7 +774,6 @@ new_job = new_job_df('master_data',final_data)
 def jd_push_to_s3(x,y,z):
     print(f'Pushing {y}_{z} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',Key = f'{x}/{y}_{z}.csv')
     print(f'{y}_{z} pushed to bucket in {x}')
@@ -797,6 +804,7 @@ if __name__ == '__main__':
     df_jd['job_reference_number'] = df_jd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
     df_jd.to_csv(r"/home/ec2-user/scrape_data/jd_page_data/jd_page_for_new_job_{}.csv".format(str(date.today())),index=False)
     jd_push_to_s3('jd_page_data','jd_page_for_new_job',str(date.today()))
+    delete_files("jd_page_data",f"jd_page_for_new_job_{str(date.today())}.csv")
 end_time = time.time()
 duration = end_time - start_time
 # email_people(email_cred,"JD page for new jobs")
@@ -807,7 +815,6 @@ print(f"Time taken: {duration/60} mintues")
 def master_push_to_s3(x,y,z):
     print(f'Pushing {y}_{z} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}_{z}.csv")
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}_{z}.csv',Key = f'{x}/{y}_{z}.csv')
 
@@ -815,6 +822,7 @@ def master_df(new_job,df_jd):
     master_final = new_job.merge(df_jd,on=['job_url_hit'],how='left')
     master_final.to_csv(r"/home/ec2-user/scrape_data/master_new_job_data/master_new_job_{}.csv".format(str(date.today())),index=False)
     master_push_to_s3('master_new_job_data','master_new_job',str(date.today()))
+    delete_files("master_new_job_data",f"master_new_job_{str(date.today())}.csv")
     # email_people(email_cred,"Master New Jobs")
     return master_final
 
@@ -845,10 +853,8 @@ def remove_keyword_param(url):
 def extract_job_codes(link):
     # Define the regex pattern to match the job code
     pattern = r'/jobadvert/([A-Za-z0-9-]+)\?'
-
     # Use re.search to find the match in the link
     match = re.search(pattern, link)
-
     # Check if a match is found and extract the job code
     if match:
         job_code = match.group(1)
@@ -872,10 +878,8 @@ def data_list(x):
     files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
     # Remove the 0th element
     files_in_s3.pop(0)
-    
     # Flatten the remaining nested lists
     flat_list = [item for sublist in files_in_s3 for item in sublist]
-    
     filtered_list = [item for item in flat_list if item != '']
     prefixed_list = [f'{x}/' + item for item in filtered_list]
     return prefixed_list
@@ -884,7 +888,6 @@ def data_list(x):
 def push_to_s3(x,y):
     print(f'Pushing {y} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
-    df = pd.read_csv(f"/home/ec2-user/scrape_data/{x}/{y}.csv")
     #push to bucket
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
@@ -917,6 +920,7 @@ def listing_page_master_df(x):
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
     push_to_s3('master_data','Listing_Page_Master')
+    delete_files("master_data","Listing_Page_Master.csv")
     # email_people(email_cred,"Listing Page Master")
     return old_listing_data
 
@@ -946,13 +950,12 @@ def merged_master_df(x):
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Merged_Master.csv",index=False)
     push_to_s3('master_data','Merged_Master')
+    delete_files("master_data","Merged_Master.csv")
     # email_people(email_cred,"Merged Master")
     return old_listing_data
 
-
 merged_master = merged_master_df('master_new_job_data')
 del merged_master
-
 
 # #### New Jobs Master
 def new_jobs_master_df(x):
@@ -973,9 +976,9 @@ def new_jobs_master_df(x):
     del old_listing_data['keyword']
     old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/New_Jobs_Master.csv",index=False)
     push_to_s3('master_data','New_Jobs_Master')
+    delete_files("master_data","New_Jobs_Master.csv")
     # email_people(email_cred,"New Jobs Master")
     return old_listing_data
-
 
 new_jobs_master = new_jobs_master_df('new_job_data')
 del new_jobs_master
@@ -1069,6 +1072,7 @@ def jd_master_df(a,b):
     print('------------------------------------------')
     del jd_master['page_number']
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
+    # delete_files("master_data","Jobs_Information_Master.csv")
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
@@ -1206,7 +1210,9 @@ def update_information(jd_master,listing_all_df):
     active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
     listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
     push_to_s3("master_data","Active_Jobs")
-    push_to_s3("master_data","Latest_Updated_Master") 
+    push_to_s3("master_data","Latest_Updated_Master")
+    delete_files("master_data","Active_Jobs.csv")
+    delete_files("master_data","Latest_Updated_Master.csv")
     end_time = time.time()
     duration = end_time - start_time
     # email_people(email_cred,"Active Jobs")
@@ -1215,8 +1221,8 @@ def update_information(jd_master,listing_all_df):
 
 # jd_master = jd_master_df('job_information_updated','jd_page_data')
 jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
-# listing_all_df = fetching_df('master_data','Listing_Page_Master')
-listing_all_df = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv")
+listing_all_df = fetching_df('master_data','Listing_Page_Master')
+# listing_all_df = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv")
 active_jobs = update_information(jd_master,listing_all_df)
 
 #####Categorisation
