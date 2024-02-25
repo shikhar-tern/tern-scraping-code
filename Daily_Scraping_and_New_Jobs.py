@@ -1066,22 +1066,56 @@ def push_to_s3(x,y):
 
 def jd_master_df(a,b):
     print('Starting with Job Description')
-    specific_files = jd_data_list(a)
     jd_master = pd.DataFrame()
-    for file in specific_files:
-        print(f'Starting with: {file}')
-        dd = fetch_df_from_s3(file)
-        jd_master = for_jd_data_list_df(file,dd,jd_master)
+    start_time = time.time()
+    print(str(datetime.now()))
+    if __name__ == '__main__':
+        # Define the URLs
+        jd_lists = jd_data_list(a)
+        results_list = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
+            # Submit the scraping function to the executor for each page number
+            results = list(executor.map(for_jd_data_list_df, jd_lists))         
+            for i, result in enumerate(results):
+                if result is not None:
+                    results_list.append(result)                      
+                    print(f"Result {i + 1} appended")
+                else:
+                    print(f"Result {i + 1} is None. Skipping...")                 
+        # Create a DataFrame from the results
+        jd_master_1 = pd.concat(results,ignore_index=True)
+        jd_master_1.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Time taken: {duration/60} mintues")
     print('------------------------------------------')
-    specific_files = data_list(b)
-    for file in specific_files:
-        print(f'Starting with: {file}')
-        dd = fetch_df_from_s3(file)
-        jd_master = for_data_list_df(file,dd,jd_master)
+    start_time = time.time()
+    print(str(datetime.now()))
+    if __name__ == '__main__':
+        # Define the URLs
+        jd_lists = data_list(b)
+        results_list = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
+            # Submit the scraping function to the executor for each page number
+            results = list(executor.map(for_data_list_df, jd_lists))          
+            for i, result in enumerate(results):
+                if result is not None:
+                    results_list.append(result)                      
+                    print(f"Result {i + 1} appended")
+                else:
+                    print(f"Result {i + 1} is None. Skipping...")          
+        # Create a DataFrame from the results
+        jd_master_2 = pd.concat(results,ignore_index=True)
+        jd_master_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Time taken: {duration/60} mintues")
     print('------------------------------------------')
+    jd_master = pd.concat([jd_master_1,jd_master_2],axis=0,ignore_index=True)
     del jd_master['page_number']
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
-    # delete_files("master_data","Jobs_Information_Master.csv")
+    delete_files("master_data","Jobs_Information_Master_Part_1.csv")
+    delete_files("master_data","Jobs_Information_Master_Part_2.csv")
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
