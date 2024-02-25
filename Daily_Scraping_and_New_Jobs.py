@@ -324,12 +324,10 @@ def fixing_job_ref(code):
 def remove_duplicates(input_list):
     seen = set()
     result = []
-    
     for item in input_list:
         if item not in seen:
             seen.add(item)
             result.append(item)
-    
     return result
 
 
@@ -984,49 +982,7 @@ new_jobs_master = new_jobs_master_df('new_job_data')
 del new_jobs_master
 
 # #### Job Description Master
-def fetch_df_from_s3(file):
-    s3 = boto3.resource("s3")
-    #load from bucket
-    obj = s3.Bucket('nhs-dataset').Object(file).get()
-    dd = pd.read_csv(obj['Body'])
-    return dd
 
-def for_jd_data_list_df(file,dd,jd_master):
-    dd['job_url'] = dd['job_url_hit']
-    df_not_null = dd[(dd['job_url_hit'].notnull())]
-    df_is_null = dd[(dd['job_url_hit'].isnull())]
-    df_is_null['job_url_hit'] = 'https://www.jobs.nhs.uk/candidate/jobadvert/' + df_is_null['job_reference_number']
-    dd = pd.concat([df_not_null,df_is_null],axis=0,ignore_index=True)
-    dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-    dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes_(x))
-    dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-    dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-    dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
-    jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-    print(f'Done with: {file}')
-    return jd_master
-
-def  for_data_list_df(file,dd,jd_master):
-    if 'job_url' in list(dd.columns):
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-        dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
-        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-        print(f'Done with: {file}')
-        return jd_master
-    else:
-        dd['job_url'] = dd['job_url_hit']
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-        dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
-        jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
-        print(f'Done with: {file}')
-        return jd_master
-    
 def extract_job_codes_(link):
     # Define the regex pattern to match the job code
     pattern = r'/jobadvert/([A-Za-z0-9-]+)?'
@@ -1038,7 +994,6 @@ def extract_job_codes_(link):
         return job_code
     else:
         return '-'
-
 
 def jd_data_list(x):
     s3 = boto3.resource("s3")
@@ -1055,7 +1010,6 @@ def jd_data_list(x):
     filtered_list_2 = [element for element in prefixed_list if pattern.search(element)]
     return filtered_list_2
 
-
 def push_to_s3(x,y):
     print(f'Pushing {y} to s3 bucket in {x}')
     s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
@@ -1063,6 +1017,44 @@ def push_to_s3(x,y):
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
 
+def fetch_df_from_s3(file):
+    s3 = boto3.resource("s3")
+    #load from bucket
+    obj = s3.Bucket('nhs-dataset').Object(file).get()
+    dd = pd.read_csv(obj['Body'])
+    return dd
+
+def for_jd_data_list_df(file):
+    dd = fetch_df_from_s3(file)
+    dd['job_url'] = dd['job_url_hit']
+    df_not_null = dd[(dd['job_url_hit'].notnull())]
+    df_is_null = dd[(dd['job_url_hit'].isnull())]
+    df_is_null['job_url_hit'] = 'https://www.jobs.nhs.uk/candidate/jobadvert/' + df_is_null['job_reference_number']
+    dd = pd.concat([df_not_null,df_is_null],axis=0,ignore_index=True)
+    dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+    dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes_(x))
+    dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+    dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+    dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
+    return dd
+
+def  for_data_list_df(file):
+    dd = fetch_df_from_s3(file)
+    if 'job_url' in list(dd.columns):
+        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+        dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
+        return dd
+    else:
+        dd['job_url'] = dd['job_url_hit']
+        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+        dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
+        return dd
 
 def jd_master_df(a,b):
     print('Starting with Job Description')
@@ -1075,16 +1067,16 @@ def jd_master_df(a,b):
         results_list = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
             # Submit the scraping function to the executor for each page number
-            results = list(executor.map(for_jd_data_list_df, jd_lists))         
+            results = list(executor.map(for_jd_data_list_df, jd_data_list(a)))
             for i, result in enumerate(results):
                 if result is not None:
                     results_list.append(result)                      
                     print(f"Result {i + 1} appended")
                 else:
-                    print(f"Result {i + 1} is None. Skipping...")                 
+                    print(f"Result {i + 1} is None. Skipping...")              
         # Create a DataFrame from the results
         jd_master_1 = pd.concat(results,ignore_index=True)
-        jd_master_1.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
+        # jd_master_1.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
     end_time = time.time()
     duration = end_time - start_time
     print(f"Time taken: {duration/60} mintues")
@@ -1097,16 +1089,16 @@ def jd_master_df(a,b):
         results_list = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
             # Submit the scraping function to the executor for each page number
-            results = list(executor.map(for_data_list_df, jd_lists))          
+            results = list(executor.map(for_data_list_df, jd_lists))     
             for i, result in enumerate(results):
                 if result is not None:
                     results_list.append(result)                      
                     print(f"Result {i + 1} appended")
                 else:
-                    print(f"Result {i + 1} is None. Skipping...")          
+                    print(f"Result {i + 1} is None. Skipping...")                   
         # Create a DataFrame from the results
         jd_master_2 = pd.concat(results,ignore_index=True)
-        jd_master_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
+        # jd_master_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
     end_time = time.time()
     duration = end_time - start_time
     print(f"Time taken: {duration/60} mintues")
@@ -1114,8 +1106,8 @@ def jd_master_df(a,b):
     jd_master = pd.concat([jd_master_1,jd_master_2],axis=0,ignore_index=True)
     del jd_master['page_number']
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
-    delete_files("master_data","Jobs_Information_Master_Part_1.csv")
-    delete_files("master_data","Jobs_Information_Master_Part_2.csv")
+    # delete_files("master_data","Jobs_Information_Master_Part_1.csv")
+    # delete_files("master_data","Jobs_Information_Master_Part_2.csv")
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
