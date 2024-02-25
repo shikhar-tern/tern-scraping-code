@@ -1036,6 +1036,7 @@ def for_jd_data_list_df(file):
     dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
     dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
     dd = dd.drop_duplicates(['scraped_date','job_url_hit'],keep='first').reset_index(drop=True)
+    print(f"Done with {file}. {jd_lists.index(file)} done out of {len(jd_lists)}")
     return dd
 
 def  for_data_list_df(file):
@@ -1046,6 +1047,7 @@ def  for_data_list_df(file):
         dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
         dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
         dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
+        print(f"Done with {file}. {jd_lists.index(file)} done out of {len(jd_lists)}")
         return dd
     else:
         dd['job_url'] = dd['job_url_hit']
@@ -1054,6 +1056,7 @@ def  for_data_list_df(file):
         dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
         dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
         dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
+        print(f"Done with {file}. {jd_lists.index(file)} done out of {len(jd_lists)}")
         return dd
 
 def jd_master_df(a,b):
@@ -1067,7 +1070,7 @@ def jd_master_df(a,b):
         results_list = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
             # Submit the scraping function to the executor for each page number
-            results = list(executor.map(for_jd_data_list_df, jd_data_list(a)))
+            results = list(executor.map(for_jd_data_list_df, jd_lists))
             for i, result in enumerate(results):
                 if result is not None:
                     results_list.append(result)                      
