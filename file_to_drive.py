@@ -21,7 +21,7 @@ def pulling_list_from_s3(x,y):
     flat_list = [item for sublist in files_in_s3 for item in sublist]
     filtered_list = [item for item in flat_list if item != '']
     #Only picking listing_file
-    filt_list = [item for item in filtered_list if item == f'{y}.xlsx']
+    filt_list = [item for item in filtered_list if item == f'{y}.csv']
     prefixed_list = [f'{x}/' + item for item in filt_list]
     return prefixed_list
 
@@ -32,7 +32,7 @@ def fetching_df(x,y):
         #load from bucket
         s3 = boto3.resource("s3")
         obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_excel(obj['Body'])
+        dd = pd.read_csv(obj['Body'])
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     return old_listing_data
 
