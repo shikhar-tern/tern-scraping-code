@@ -339,7 +339,7 @@ def listing_page_master_df(x):
     # email_people(email_cred,"Listing Page Master")
     print(listing_all_df.head())
     print(listing_all_df.columns)
-    return old_listing_data
+    return listing_all_df
 
 listing_page_master = listing_page_master_df('listing_page_data')
 print(listing_page_master)
