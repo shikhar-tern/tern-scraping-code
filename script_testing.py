@@ -225,28 +225,30 @@ max_date = max_date.date()
 
 list_1 = jd_data_list("job_information_updated")
 list_2 = data_list("jd_page_data")
-need_to_append_1 = pd.DataFrame()
+need_to_append = pd.DataFrame()
 for i in list_1:
     if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
         print(f"Starting with {i}")
         df = for_jd_data_list_df(i)
-        need_to_append_1 = pd.concat([need_to_append_1,df],axis=0,ignore_index=True)
+        del df['page_number']
+        need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
         print(f"Done with {i}")
     else:
         pass
 # print(list_1)
-need_to_append_2 = pd.DataFrame()
 for i in list_2:
     if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
         print(f"Starting with {i}")
         df = for_data_list_df(i)
-        need_to_append_2 = pd.concat([need_to_append_2,df],axis=0,ignore_index=True)
+        del df['page_number']
+        need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
         print(f"Done with {i}")
     else:
         pass
 # print(list_2)
-print(need_to_append_1.shape)
-print(need_to_append_1.columns)
-print('--------------------------------------')
-print(need_to_append_2.shape)
-print(need_to_append_2.columns)
+print(need_to_append.shape)
+print(need_to_append.columns)
+
+final_df = pd.concat([till_now_jd_master,need_to_append],axis=0,ignore_index=True)
+print(final_df.columns)
+print(final_df.shape)
