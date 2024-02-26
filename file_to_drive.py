@@ -5,10 +5,6 @@ import boto3
 from botocore.exceptions import ClientError
 import botocore
 
-CLIENT_SECRET_FILE = 'CLIENT_SECRET_FILE.json'
-API_NAME = 'drive'
-API_VERSION = 'v3'
-SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def pulling_list_from_s3(x,y):
     s3 = boto3.resource("s3")
@@ -40,9 +36,12 @@ df = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categ
 df.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx",index=False)
 # df = pd.read_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
 
-service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
-
 def push_to_drive():
+    CLIENT_SECRET_FILE = 'CLIENT_SECRET_FILE.json'
+    API_NAME = 'drive'
+    API_VERSION = 'v3'
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
     folder_id = '11PyImlmzGi2FeMxhDZC8c5uA3LKxab13'
     file_name = 'Active_Jobs_with_categorisation.xlsx'
     mine_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -51,15 +50,11 @@ def push_to_drive():
         'name': file_name,
         'parents': [folder_id]
     }
-
     media_content = MediaFileUpload(r"/home/ec2-user/scrape_data/master_data/{0}".format(file_name), mimetype=mine_type)
-
     file = service.files().create(
         body=file_metadata,
-
         media_body=media_content
     ).execute()
-
     return file
 
 file = push_to_drive()
