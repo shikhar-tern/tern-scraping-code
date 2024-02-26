@@ -952,10 +952,9 @@ def listing_page_master_df(x):
     push_to_s3('master_data','Listing_Page_Master')
     delete_files("master_data","Listing_Page_Master.csv")
     # email_people(email_cred,"Listing Page Master")
-    return old_listing_data
+    return listing_all_df
 
 listing_page_master = listing_page_master_df('listing_page_data')
-print(listing_page_master.head())
 # #### Merged Master
 
 def merged_master_df(x):
@@ -986,7 +985,7 @@ def merged_master_df(x):
     push_to_s3('master_data','Merged_Master')
     delete_files("master_data","Merged_Master.csv")
     # email_people(email_cred,"Merged Master")
-    return old_listing_data
+    return merged_master_all_df
 
 merged_master = merged_master_df('master_new_job_data')
 del merged_master
@@ -1019,7 +1018,7 @@ def new_jobs_master_df(x):
     push_to_s3('master_data','New_Jobs_Master')
     delete_files("master_data","New_Jobs_Master.csv")
     # email_people(email_cred,"New Jobs Master")
-    return old_listing_data
+    return new_jobs_master_all_df
 new_jobs_master = new_jobs_master_df('new_job_data')
 del new_jobs_master
 
