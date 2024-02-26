@@ -1,7 +1,7 @@
 from googleapiclient.http import MediaFileUpload
 from google_drive_service import Create_Service
 
-CLIENT_SECRET_FILE = 'credentials.json'
+CLIENT_SECRET_FILE = 'CLIENT_SECRET_FILE.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
