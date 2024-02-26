@@ -239,7 +239,7 @@ def pull_jd_updated_df(x):
 def jd_master_df(a,b):
     #last_information_updated
     till_now_jd_master = pull_jd_updated_df('master_data')
-    till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
+    till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'],format='ISO8601')
     max_date = max(till_now_jd_master['scraped_date'])
     max_date = max_date.date()
     #appending only new to old
