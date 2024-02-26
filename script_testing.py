@@ -302,12 +302,13 @@ def fetching_df(x,y):
 def listing_page_master_df(x):
     print('Starting with Listing Page')
     listing_all_df = fetching_df('master_data','Listing_Page_Master')
-    print(listing_all_df.head())
     listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'],format='ISO8601')
     max_date = max(listing_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
+    print(listing_all_df.head())
     for file in specific_files:
+        print(file)
         if pd.to_datetime(file.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
             print(f'Starting with: {file}')
             s3 = boto3.resource("s3")
@@ -336,8 +337,8 @@ def listing_page_master_df(x):
     push_to_s3('master_data','Listing_Page_Master')
     delete_files("master_data","Listing_Page_Master.csv")
     # email_people(email_cred,"Listing Page Master")
+    print(listing_all_df.head())
+    print(listing_all_df.columns)
     return old_listing_data
 
 listing_page_master = listing_page_master_df('listing_page_data')
-print(listing_page_master.head())
-print(listing_page_master.head())
