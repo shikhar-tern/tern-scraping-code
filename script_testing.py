@@ -270,9 +270,9 @@ def jd_master_df(a,b):
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
-jd_master = jd_master_df('job_information_updated','jd_page_data')
-print(jd_master.head())
-print(jd_master.columns)
+# jd_master = jd_master_df('job_information_updated','jd_page_data')
+# print(jd_master.head())
+# print(jd_master.columns)
 def pulling_list_from_s3(x,y):
     s3 = boto3.resource("s3")
     s3_bucket = s3.Bucket("nhs-dataset")
@@ -302,6 +302,7 @@ def fetching_df(x,y):
 def listing_page_master_df(x):
     print('Starting with Listing Page')
     listing_all_df = fetching_df('master_data','Listing_Page_Master')
+    print(listing_all_df.head())
     listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'],format='ISO8601')
     max_date = max(listing_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
