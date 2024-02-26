@@ -890,63 +890,98 @@ def push_to_s3(x,y):
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.csv',Key = f'{x}/{y}.csv')
     print(f'{y} pushed to bucket in {x}')
 
+def pulling_list_from_s3(x,y):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)  
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking listing_file
+    filt_list = [item for item in filtered_list if item == f'{y}.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
+
+def fetching_df(x,y):
+    old_listing_data = pd.DataFrame()
+    specific_files = pulling_list_from_s3(x,y)
+    for file in specific_files:
+        #load from bucket
+        s3 = boto3.resource("s3")
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'])
+        old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
+    return old_listing_data
 
 def listing_page_master_df(x):
     print('Starting with Listing Page')
+    listing_all_df = fetching_df('master_data','Listing_Page_Master')
+    listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'],format='ISO8601')
+    max_date = max(listing_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     for file in specific_files:
-        print(f'Starting with: {file}')
-        s3 = boto3.resource("s3")
-        #load from bucket
-        obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'])
-        # print(dd.columns)
-        try:
-            del dd['Unnamed: 0']
-        except:
+        if pd.to_datetime(file.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f'Starting with: {file}')
+            s3 = boto3.resource("s3")
+            #load from bucket
+            obj = s3.Bucket('nhs-dataset').Object(file).get()
+            dd = pd.read_csv(obj['Body'])
+            try:
+                del dd['Unnamed: 0']
+            except:
+                pass
+            dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+            dd['scrap_date'] = file.split('all_')[-1].strip('.csv')
+            dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+            dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+            dd = dd.drop_duplicates(['job_url_hit'],keep='first').reset_index(drop=True)
+            try:
+                del dd['keyword']
+            except:
+                pass
+            old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
+        else:
             pass
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['scrap_date'] = file.split('all_')[-1].strip('.csv')
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd = dd.drop_duplicates(['job_url_hit'],keep='first').reset_index(drop=True)
-        try:
-            del dd['keyword']
-        except:
-            pass
-        old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
-    old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
+    listing_all_df = pd.concat([listing_all_df,old_listing_data],axis=0,ignore_index=True)    
+    listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
     push_to_s3('master_data','Listing_Page_Master')
     delete_files("master_data","Listing_Page_Master.csv")
     # email_people(email_cred,"Listing Page Master")
     return old_listing_data
 
-
 listing_page_master = listing_page_master_df('listing_page_data')
-
 
 # #### Merged Master
 
 def merged_master_df(x):
     print('Starting With Merged Master')
+    merged_master_all_df = fetching_df('master_data','Merged_Master')
+    merged_master_all_df['scrap_date'] = pd.to_datetime(merged_master_all_df['scrap_date'],format='ISO8601')
+    max_date = max(merged_master_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     # Print the list of specific files
-    #print(specific_files)
     for file in specific_files:
-       # print(f"Starting with {file}")
-        s3 = boto3.resource("s3")
-        #load from bucket
-        obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'])
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
-        dd = dd.drop_duplicates(['scrap_date','job_code'],keep='first').reset_index(drop=True) 
-        old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
-    old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/Merged_Master.csv",index=False)
+        if pd.to_datetime(file.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f"Starting with {file}")
+            s3 = boto3.resource("s3")
+            #load from bucket
+            obj = s3.Bucket('nhs-dataset').Object(file).get()
+            dd = pd.read_csv(obj['Body'])
+            dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+            dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+            dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+            dd['job_reference_number'] = dd['job_reference_number'].apply(lambda x: fixing_job_ref(x))
+            dd = dd.drop_duplicates(['scrap_date','job_code'],keep='first').reset_index(drop=True) 
+            old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
+        else:
+            pass
+    merged_master_all_df = pd.concat([merged_master_all_df,old_listing_data],axis=0,ignore_index=True)
+    merged_master_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Merged_Master.csv",index=False)
     push_to_s3('master_data','Merged_Master')
     delete_files("master_data","Merged_Master.csv")
     # email_people(email_cred,"Merged Master")
@@ -958,21 +993,29 @@ del merged_master
 # #### New Jobs Master
 def new_jobs_master_df(x):
     print('Starting with New Jobs Data')
+    new_jobs_master_all_df = fetching_df('master_data','New_Jobs_Master')
+    new_jobs_master_all_df['scrap_date'] = pd.to_datetime(new_jobs_master_all_df['scrap_date'],format='ISO8601')
+    max_date = max(new_jobs_master_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     # Print the list of specific files
     for file in specific_files:
-        s3 = boto3.resource("s3")
-        #load from bucket
-        obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'])
-        dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
-        dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
-        dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
-        dd = dd.drop_duplicates(['scrap_date','job_code'],keep='first').reset_index(drop=True) 
-        old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
-    del old_listing_data['keyword']
-    old_listing_data.to_csv(r"/home/ec2-user/scrape_data/master_data/New_Jobs_Master.csv",index=False)
+        if pd.to_datetime(file.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f"Starting with {file}")
+            s3 = boto3.resource("s3")
+            #load from bucket
+            obj = s3.Bucket('nhs-dataset').Object(file).get()
+            dd = pd.read_csv(obj['Body'])
+            dd['job_url_hit'] = dd['job_url'].apply(lambda x: remove_keyword_param(x))
+            dd['job_code'] = dd['job_url_hit'].apply(lambda x:extract_job_codes(x))
+            dd['short_job_link'] = dd['job_url_hit'].apply(lambda x:short_link(x))
+            dd = dd.drop_duplicates(['scrap_date','job_code'],keep='first').reset_index(drop=True) 
+            old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
+        else:
+            pass
+    new_jobs_master_all_df = pd.concat([new_jobs_master_all_df,old_listing_data],axis=0,ignore_index=True)
+    del new_jobs_master_all_df['keyword']
+    new_jobs_master_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/New_Jobs_Master.csv",index=False)
     push_to_s3('master_data','New_Jobs_Master')
     delete_files("master_data","New_Jobs_Master.csv")
     # email_people(email_cred,"New Jobs Master")
