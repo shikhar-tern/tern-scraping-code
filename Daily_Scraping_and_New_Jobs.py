@@ -948,7 +948,6 @@ def listing_page_master_df(x):
             pass
     listing_all_df = pd.concat([listing_all_df,old_listing_data],axis=0,ignore_index=True)    
     listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv",index=False)
-    print(listing_all_df.head())
     push_to_s3('master_data','Listing_Page_Master')
     delete_files("master_data","Listing_Page_Master.csv")
     # email_people(email_cred,"Listing Page Master")
