@@ -1014,13 +1014,11 @@ def new_jobs_master_df(x):
         else:
             pass
     new_jobs_master_all_df = pd.concat([new_jobs_master_all_df,old_listing_data],axis=0,ignore_index=True)
-    del new_jobs_master_all_df['keyword']
     new_jobs_master_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/New_Jobs_Master.csv",index=False)
     push_to_s3('master_data','New_Jobs_Master')
     delete_files("master_data","New_Jobs_Master.csv")
     # email_people(email_cred,"New Jobs Master")
     return old_listing_data
-
 new_jobs_master = new_jobs_master_df('new_job_data')
 del new_jobs_master
 
