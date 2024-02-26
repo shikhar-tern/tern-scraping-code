@@ -271,7 +271,8 @@ def jd_master_df(a,b):
     return jd_master
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
-
+print(jd_master.head())
+print(jd_master.columns)
 def pulling_list_from_s3(x,y):
     s3 = boto3.resource("s3")
     s3_bucket = s3.Bucket("nhs-dataset")
@@ -337,3 +338,5 @@ def listing_page_master_df(x):
     return old_listing_data
 
 listing_page_master = listing_page_master_df('listing_page_data')
+print(listing_page_master.head())
+print(listing_page_master.head())
