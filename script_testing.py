@@ -215,3 +215,5 @@ def  for_data_list_df(file):
     
 till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
 print(till_now_jd_master.shape)
+print(till_now_jd_master.head())
+print(till_now_jd_master.columns)
