@@ -2,8 +2,8 @@ from googleapiclient.http import MediaFileUpload
 import pickle
 import os
 import datetime
-import google_auth_httplib2
-import google_auth_oauthlib
+# import google_auth_httplib2
+# import google_auth_oauthlib
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
