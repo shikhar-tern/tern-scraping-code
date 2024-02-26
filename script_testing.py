@@ -209,10 +209,36 @@ def  for_data_list_df(file):
         dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
         print(f"Done with {file}")
         return dd
+
+def jd_updated_data_list(x):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)
     
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking Active_Jobs
+    filt_list = [item for item in filtered_list if item == 'Jobs_Information_Master.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
+
+
+def pull_jd_updated_df(x):
+    specific_files = jd_updated_data_list(x)
+    for file in specific_files:
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'])
+    return dd
+
 def jd_master_df(a,b):
     #last_information_updated
-    till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+    till_now_jd_master = pull_jd_updated_df('master_data')
     till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
     max_date = max(till_now_jd_master['scraped_date'])
     max_date = max_date.date()
