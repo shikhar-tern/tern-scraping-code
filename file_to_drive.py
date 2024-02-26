@@ -36,7 +36,7 @@ def fetching_df(x,y):
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     return old_listing_data
 
-df = fetching_df("master_data",'Active_Jobs_with_categorisation')
+df = fetching_df('master_data','Active_Jobs_with_categorisation')
 df.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
 
 service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
