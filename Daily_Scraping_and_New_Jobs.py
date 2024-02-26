@@ -1059,9 +1059,35 @@ def  for_data_list_df(file):
         print(f"Done with {file}")
         return dd
 
+def jd_updated_data_list(x):
+    s3 = boto3.resource("s3")
+    s3_bucket = s3.Bucket("nhs-dataset")
+    dir = x
+    files_in_s3 = [f.key.split(dir + "/") for f in s3_bucket.objects.filter(Prefix=dir).all()]
+    # Remove the 0th element
+    files_in_s3.pop(0)
+    
+    # Flatten the remaining nested lists
+    flat_list = [item for sublist in files_in_s3 for item in sublist]
+    filtered_list = [item for item in flat_list if item != '']
+    #Only picking Active_Jobs
+    filt_list = [item for item in filtered_list if item == 'Jobs_Information_Master.csv']
+    prefixed_list = [f'{x}/' + item for item in filt_list]
+    return prefixed_list
+
+
+def pull_jd_updated_df(x):
+    specific_files = jd_updated_data_list(x)
+    for file in specific_files:
+        s3 = boto3.resource("s3")
+        #load from bucket
+        obj = s3.Bucket('nhs-dataset').Object(file).get()
+        dd = pd.read_csv(obj['Body'])
+    return dd
+
 def jd_master_df(a,b):
     #last_information_updated
-    till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+    till_now_jd_master = pull_jd_updated_df('master_data')
     till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
     max_date = max(till_now_jd_master['scraped_date'])
     max_date = max_date.date()
@@ -1091,32 +1117,36 @@ def jd_master_df(a,b):
     jd_master = pd.concat([till_now_jd_master,need_to_append],axis=0,ignore_index=True)
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
     push_to_s3("master_data","Jobs_Information_Master")
+    delete_files("master_data","Jobs_Information_Master.csv")
+    # email_people(email_cred,"Jobs Information Master")
     return jd_master
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
 
 
 ### Update Code
-jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
-listing_page_master['scrap_date'] = pd.to_datetime(listing_page_master['scrap_date'])
+def fixing_date(jd_master,listing_page_master):
+    print(f"Starting with fixing dates")
+    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
+    listing_page_master['scrap_date'] = pd.to_datetime(listing_page_master['scrap_date'])
+    # Assuming 'closing_date' is the column with date strings
+    listing_page_master['closing_date'] = pd.to_datetime(
+        listing_page_master['closing_date'], 
+        infer_datetime_format=True, 
+        errors='coerce')
+    # Convert the datetime column to the desired 'yyyy-mm-dd' format
+    listing_page_master['closing_date'] = pd.to_datetime(listing_page_master['closing_date'].dt.strftime('%Y-%m-%d'))
+    # Assuming 'closing_date' is the column with date strings
+    jd_master['date_posted'] = pd.to_datetime(
+        jd_master['date_posted'], 
+        infer_datetime_format=True, 
+        errors='coerce')
+    # Convert the datetime column to the desired 'yyyy-mm-dd' format
+    jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'].dt.strftime('%Y-%m-%d'))
+    print(f"Done with fixing dates")
+    return jd_master,listing_page_master
 
-# Assuming 'closing_date' is the column with date strings
-listing_page_master['closing_date'] = pd.to_datetime(
-    listing_page_master['closing_date'], 
-    infer_datetime_format=True, 
-    errors='coerce')
-
-# Convert the datetime column to the desired 'yyyy-mm-dd' format
-listing_page_master['closing_date'] = pd.to_datetime(listing_page_master['closing_date'].dt.strftime('%Y-%m-%d'))
-
-# Assuming 'closing_date' is the column with date strings
-jd_master['date_posted'] = pd.to_datetime(
-    jd_master['date_posted'], 
-    infer_datetime_format=True, 
-    errors='coerce')
-
-# Convert the datetime column to the desired 'yyyy-mm-dd' format
-jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'].dt.strftime('%Y-%m-%d'))
+jd_master,listing_page_master = fixing_date(jd_master,listing_page_master)
 
 #there are two types
 #1. job found
@@ -1183,6 +1213,7 @@ def fetching_df(x,y):
     return old_listing_data
 
 def update_information(jd_master,listing_all_df):
+    print(f"Starting with Updating")
     start_time = time.time()
     # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
     ### Update Code
