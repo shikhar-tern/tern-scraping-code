@@ -1267,7 +1267,7 @@ def update_information(jd_master,listing_all_df):
     return active_jobs_2
 
 # jd_master = jd_master_df('job_information_updated','jd_page_data')
-jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+jd_master = fetching_df('master_data','Jobs_Information_Master')
 listing_all_df = fetching_df('master_data','Listing_Page_Master')
 # listing_all_df = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Listing_Page_Master.csv")
 active_jobs = update_information(jd_master,listing_all_df)
