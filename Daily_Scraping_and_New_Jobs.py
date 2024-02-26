@@ -1168,8 +1168,8 @@ jd_master = jd_master_df('job_information_updated','jd_page_data')
 ### Update Code
 def fixing_date(jd_master,listing_page_master):
     print(f"Starting with fixing dates")
-    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
-    listing_page_master['scrap_date'] = pd.to_datetime(listing_page_master['scrap_date'])
+    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'],format='ISO8601')
+    listing_page_master['scrap_date'] = pd.to_datetime(listing_page_master['scrap_date'],format='ISO8601')
     # Assuming 'closing_date' is the column with date strings
     listing_page_master['closing_date'] = pd.to_datetime(
         listing_page_master['closing_date'], 
