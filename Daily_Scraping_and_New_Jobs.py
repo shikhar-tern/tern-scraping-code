@@ -1618,7 +1618,39 @@ def push_to_drive():
         media_body=media_content
     ).execute()
     print(f"File pushed to Drive")
-    return file
+    file_id = file['id']
+    share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"view?usp=drivesdk"
+    return share_file_link
+
+#Email with Just Text
+def email_people_part_2(email_cred, x,y):
+    # Email configuration
+    sender_email = email_cred['email']
+    sender_password = email_cred['password']
+    receiver_email = ["shikharrajput@gmail.com"]
+    subject = f"{x} Pushed to S3 on {str(date.today())}"
+    # Create the email body with a formatted table
+    body = f"""
+    <html>
+    <body>
+      <p>Hi,</p>
+      <p>{x} pushed to S3 on {str(date.today())}. {y}</p>
+      <p></p>
+    </body>
+    </html>
+    """  
+    # Create the email message
+    message = MIMEMultipart()
+    message.attach(MIMEText(body, 'html'))
+    # Set up the SSL context
+    context = ssl.create_default_context()
+    # Connect to the SMTP server and send the email
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+    with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+    print("Email sent successfully!")
 
 def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     #final_tag
@@ -1662,12 +1694,12 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv",index=False)
     active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation_{}.xlsx".format(str(date.today())),index=False)
     push_to_s3('master_data','Active_Jobs_with_categorisation')
-    file = push_to_drive()
-    email_people(email_cred,"Active Jobs with categorisation and all other Files")
+    share_file_link = push_to_drive()
+    text = f"Active Jobs with categorisation and all other Files"
+    text2 = f"Here is the link to the file: {share_file_link}"
+    email_people_part_2(email_cred,text,text2)
     delete_files("master_data","Active_Jobs_with_categorisation_{}.xlsx".format(str(date.today())))
     delete_files("master_data","Active_Jobs_with_categorisation.csv")
     return active_jobs_final_2
 
 active_jobs_final_2 = final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df)
-
-# https://docs.google.com/spreadsheets/d/13nIFRDjZzQcSLBWPmCR01yQAdAun6kmB
