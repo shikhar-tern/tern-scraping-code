@@ -32,7 +32,7 @@ def fetching_df(x,y):
         #load from bucket
         s3 = boto3.resource("s3")
         obj = s3.Bucket('nhs-dataset').Object(file).get()
-        dd = pd.read_csv(obj['Body'], encoding='unicode_escape')
+        dd = pd.read_csv(obj['Body'], encoding='utf-8')
         old_listing_data = pd.concat([old_listing_data,dd],axis=0,ignore_index=True)
     return old_listing_data
 
