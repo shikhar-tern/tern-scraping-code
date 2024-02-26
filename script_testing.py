@@ -212,3 +212,6 @@ def  for_data_list_df(file):
     
 
 # jd_master = jd_master_df('job_information_updated','jd_page_data')
+    
+till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+print(till_now_jd_master.shape)
