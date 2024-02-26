@@ -1620,7 +1620,7 @@ def push_to_drive():
     ).execute()
     print(f"File pushed to Drive")
     file_id = file['id']
-    share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"view?usp=drivesdk"
+    share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"/edit"
     return share_file_link
 
 #Email with Just Text
@@ -1628,7 +1628,7 @@ def email_people_part_2(email_cred, x,y):
     # Email configuration
     sender_email = email_cred['email']
     sender_password = email_cred['password']
-    receiver_email = ["shikharrajput@gmail.com"]
+    receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com","ashita@tern-group.com"]
     subject = f"{x} Pushed to S3 on {str(date.today())}"
     # Create the email body with a formatted table
     body = f"""
