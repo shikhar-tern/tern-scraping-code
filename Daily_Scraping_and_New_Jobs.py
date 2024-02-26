@@ -1605,14 +1605,15 @@ def push_to_drive():
     SCOPES = ['https://www.googleapis.com/auth/drive']
     service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
     folder_id = '11PyImlmzGi2FeMxhDZC8c5uA3LKxab13'
-    file_name = 'Active_Jobs_with_categorisation.xlsx'
+    file_tag = 'Active_Jobs_with_categorisation'
+    file_name = f'{file_tag}_{str(date.today())}.xlsx'
     mine_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     # Upload a file
     file_metadata = {
         'name': file_name,
         'parents': [folder_id]
     }
-    media_content = MediaFileUpload(r"/home/ec2-user/scrape_data/master_data/{}_{}.xlsx".format(file_name,str(date.today())), mimetype=mine_type)
+    media_content = MediaFileUpload(r"/home/ec2-user/scrape_data/master_data/{}_{}.xlsx".format(file_tag,str(date.today())), mimetype=mine_type)
     file = service.files().create(
         body=file_metadata,
         media_body=media_content
