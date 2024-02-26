@@ -219,4 +219,6 @@ print(till_now_jd_master.head())
 print(till_now_jd_master.columns)
 
 till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
-print(max(till_now_jd_master['scraped_date']))
+max_date = max(till_now_jd_master['scraped_date'])
+max_date = max_date.date()
+print(max_date)
