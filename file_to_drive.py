@@ -55,6 +55,7 @@ def push_to_drive():
         body=file_metadata,
         media_body=media_content
     ).execute()
+    print(f"File pushed to Drive")
     return file
 
 file = push_to_drive()
