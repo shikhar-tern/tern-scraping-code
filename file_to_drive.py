@@ -37,7 +37,7 @@ def fetching_df(x,y):
     return old_listing_data
 
 df = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv")
-df.read_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx",index=False)
+df.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx",index=False)
 # df = pd.read_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
 
 service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
