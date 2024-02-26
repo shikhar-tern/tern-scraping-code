@@ -21,6 +21,8 @@ import boto3
 from botocore.exceptions import ClientError
 import botocore
 import s3fs as s3
+from googleapiclient.http import MediaFileUpload
+from google_drive_service import Create_Service
 import spacy
 import spacy.cli
 # Load spaCy model
@@ -1596,6 +1598,27 @@ def push_to_s3_categorisation_file(x,y):
     s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.xlsx',Key = f'{x}/{y}.xlsx')
     print(f'{y} pushed to bucket in {x}')
 
+def push_to_drive():
+    CLIENT_SECRET_FILE = 'CLIENT_SECRET_FILE.json'
+    API_NAME = 'drive'
+    API_VERSION = 'v3'
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
+    folder_id = '11PyImlmzGi2FeMxhDZC8c5uA3LKxab13'
+    file_name = 'Active_Jobs_with_categorisation.xlsx'
+    mine_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    # Upload a file
+    file_metadata = {
+        'name': file_name,
+        'parents': [folder_id]
+    }
+    media_content = MediaFileUpload(r"/home/ec2-user/scrape_data/master_data/{}_{}.xlsx".format(file_name,str(date.today())), mimetype=mine_type)
+    file = service.files().create(
+        body=file_metadata,
+        media_body=media_content
+    ).execute()
+    print(f"File pushed to Drive")
+    return file
 
 def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     #final_tag
@@ -1637,12 +1660,14 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2['Specialisation'].fillna("",inplace=True)
     active_jobs_final_2.loc[(active_jobs_final_2['Final_Tag']=='') & ((active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctor')) | active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctors')),'Final_Tag'] = 'Doctor'
     active_jobs_final_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv",index=False)
-    active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
-    push_to_s3_categorisation_file('master_data','Active_Jobs_with_categorisation')
+    active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation_{}.xlsx".format(str(date.today())),index=False)
     push_to_s3('master_data','Active_Jobs_with_categorisation')
+    file = push_to_drive()
     email_people(email_cred,"Active Jobs with categorisation and all other Files")
-    delete_files("master_data","Active_Jobs_with_categorisation.xlsx")
+    delete_files("master_data","Active_Jobs_with_categorisation_{}.xlsx".format(str(date.today())))
     delete_files("master_data","Active_Jobs_with_categorisation.csv")
     return active_jobs_final_2
 
 active_jobs_final_2 = final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df)
+
+# https://docs.google.com/spreadsheets/d/13nIFRDjZzQcSLBWPmCR01yQAdAun6kmB
