@@ -1060,58 +1060,37 @@ def  for_data_list_df(file):
         return dd
 
 def jd_master_df(a,b):
-    print('Starting with Job Description')
-    jd_master = pd.DataFrame()
-    start_time = time.time()
-    print(str(datetime.now()))
-    if __name__ == '__main__':
-        # Define the URLs
-        jd_lists = jd_data_list(a)
-        results_list = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-            # Submit the scraping function to the executor for each page number
-            results = list(executor.map(for_jd_data_list_df, jd_lists))
-            for i, result in enumerate(results):
-                if result is not None:
-                    results_list.append(result)                      
-                    print(f"Result {i + 1} appended")
-                else:
-                    print(f"Result {i + 1} is None. Skipping...")              
-        # Create a DataFrame from the results
-        jd_master_1 = pd.concat(results,ignore_index=True)
-        # jd_master_1.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_1.csv",index=False)
-    end_time = time.time()
-    duration = end_time - start_time
-    print(f"Time taken: {duration/60} mintues")
+    #last_information_updated
+    till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+    till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
+    max_date = max(till_now_jd_master['scraped_date'])
+    max_date = max_date.date()
+    #appending only new to old
+    need_to_append = pd.DataFrame()
+    list_1 = jd_data_list(a)
+    for i in list_1:
+        if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f"Starting with {i}")
+            df = for_jd_data_list_df(i)
+            del df['page_number']
+            need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
+            print(f"Done with {i}")
+        else:
+            pass
     print('------------------------------------------')
-    start_time = time.time()
-    print(str(datetime.now()))
-    if __name__ == '__main__':
-        # Define the URLs
-        jd_lists = data_list(b)
-        results_list = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=mp.cpu_count()-1) as executor:
-            # Submit the scraping function to the executor for each page number
-            results = list(executor.map(for_data_list_df, jd_lists))     
-            for i, result in enumerate(results):
-                if result is not None:
-                    results_list.append(result)                      
-                    print(f"Result {i + 1} appended")
-                else:
-                    print(f"Result {i + 1} is None. Skipping...")                   
-        # Create a DataFrame from the results
-        jd_master_2 = pd.concat(results,ignore_index=True)
-        # jd_master_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master_Part_2.csv",index=False)
-    end_time = time.time()
-    duration = end_time - start_time
-    print(f"Time taken: {duration/60} mintues")
-    print('------------------------------------------')
-    jd_master = pd.concat([jd_master_1,jd_master_2],axis=0,ignore_index=True)
-    del jd_master['page_number']
+    list_2 = data_list(b)
+    for i in list_2:
+        if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f"Starting with {i}")
+            df = for_data_list_df(i)
+            del df['page_number']
+            need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
+            print(f"Done with {i}")
+        else:
+            pass
+    jd_master = pd.concat([till_now_jd_master,need_to_append],axis=0,ignore_index=True)
     jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
-    # delete_files("master_data","Jobs_Information_Master_Part_1.csv")
-    # delete_files("master_data","Jobs_Information_Master_Part_2.csv")
-    # push_to_s3("master_data","Jobs_Information_Master")
+    push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
