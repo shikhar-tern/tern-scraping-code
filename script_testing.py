@@ -222,7 +222,27 @@ till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_
 max_date = max(till_now_jd_master['scraped_date'])
 max_date = max_date.date()
 
+
 list_1 = jd_data_list("job_information_updated")
-print(list_1)
 list_2 = data_list("jd_page_data")
-print(list_2)
+need_to_append = pd.DataFrame()
+for i in list_1:
+    if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+        print(f"Starting with {i}")
+        df = for_jd_data_list_df(i)
+        need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
+        print(f"Done with {i}")
+    else:
+        pass
+# print(list_1)
+for i in list_2:
+    if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+        print(f"Starting with {i}")
+        df = for_data_list_df(i)
+        need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
+        print(f"Done with {i}")
+    else:
+        pass
+# print(list_2)
+print(need_to_append.shape)
+print(need_to_append.columns)
