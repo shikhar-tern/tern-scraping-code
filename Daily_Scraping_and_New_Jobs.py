@@ -1639,6 +1639,7 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
     push_to_s3_categorisation_file('master_data','Active_Jobs_with_categorisation')
     email_people(email_cred,"Active Jobs with categorisation and all other Files")
+    delete_files("master_data","Active_Jobs_with_categorisation.xlsx")
     return active_jobs_final_2
 
 active_jobs_final_2 = final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df)
