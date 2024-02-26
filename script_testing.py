@@ -210,45 +210,38 @@ def  for_data_list_df(file):
         print(f"Done with {file}")
         return dd
     
+def jd_master_df(a,b):
+    #last_information_updated
+    till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
+    till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
+    max_date = max(till_now_jd_master['scraped_date'])
+    max_date = max_date.date()
+    #appending only new to old
+    need_to_append = pd.DataFrame()
+    list_1 = jd_data_list(a)
+    for i in list_1:
+        if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f"Starting with {i}")
+            df = for_jd_data_list_df(i)
+            del df['page_number']
+            need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
+            print(f"Done with {i}")
+        else:
+            pass
+    print('------------------------------------------')
+    list_2 = data_list(b)
+    for i in list_2:
+        if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
+            print(f"Starting with {i}")
+            df = for_data_list_df(i)
+            del df['page_number']
+            need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
+            print(f"Done with {i}")
+        else:
+            pass
+    jd_master = pd.concat([till_now_jd_master,need_to_append],axis=0,ignore_index=True)
+    jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
+    # push_to_s3("master_data","Jobs_Information_Master")
+    return jd_master
 
-# jd_master = jd_master_df('job_information_updated','jd_page_data')
-    
-till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
-print(till_now_jd_master.shape)
-print(till_now_jd_master.head())
-print(till_now_jd_master.columns)
-
-till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
-max_date = max(till_now_jd_master['scraped_date'])
-max_date = max_date.date()
-
-
-list_1 = jd_data_list("job_information_updated")
-list_2 = data_list("jd_page_data")
-need_to_append = pd.DataFrame()
-for i in list_1:
-    if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
-        print(f"Starting with {i}")
-        df = for_jd_data_list_df(i)
-        del df['page_number']
-        need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
-        print(f"Done with {i}")
-    else:
-        pass
-# print(list_1)
-for i in list_2:
-    if pd.to_datetime(i.split("/")[-1].split("_")[-1].replace(".csv","")).date() > max_date:
-        print(f"Starting with {i}")
-        df = for_data_list_df(i)
-        del df['page_number']
-        need_to_append = pd.concat([need_to_append,df],axis=0,ignore_index=True)
-        print(f"Done with {i}")
-    else:
-        pass
-# print(list_2)
-print(need_to_append.shape)
-print(need_to_append.columns)
-
-final_df = pd.concat([till_now_jd_master,need_to_append],axis=0,ignore_index=True)
-print(final_df.columns)
-print(final_df.shape)
+jd_master = jd_master_df('job_information_updated','jd_page_data')
