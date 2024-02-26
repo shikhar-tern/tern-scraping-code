@@ -342,3 +342,4 @@ def listing_page_master_df(x):
     return old_listing_data
 
 listing_page_master = listing_page_master_df('listing_page_data')
+print(listing_page_master)
