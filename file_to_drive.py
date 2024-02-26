@@ -57,7 +57,7 @@ def push_to_drive():
     ).execute()
     print(f"File pushed to Drive")
     file_id = file['id']
-    share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"view?usp=drivesdk"
+    share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"edit"
     return share_file_link
 
 share_file_link = push_to_drive()
