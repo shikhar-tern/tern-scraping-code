@@ -217,3 +217,6 @@ till_now_jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_I
 print(till_now_jd_master.shape)
 print(till_now_jd_master.head())
 print(till_now_jd_master.columns)
+
+till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'])
+print(max(till_now_jd_master['scraped_date']))
