@@ -923,6 +923,8 @@ def listing_page_master_df(x):
     listing_all_df = fetching_df('master_data','Listing_Page_Master')
     listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'],format='ISO8601')
     max_date = max(listing_all_df['scrap_date']).date()
+    listing_all_df = listing_all_df[listing_all_df['scrap_date']!= max_date]
+    max_date = max(listing_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     for file in specific_files:
@@ -963,6 +965,8 @@ def merged_master_df(x):
     merged_master_all_df = fetching_df('master_data','Merged_Master')
     merged_master_all_df['scrap_date'] = pd.to_datetime(merged_master_all_df['scrap_date'],format='ISO8601')
     max_date = max(merged_master_all_df['scrap_date']).date()
+    merged_master_all_df = merged_master_all_df[merged_master_all_df['scrap_date']!= max_date]
+    max_date = max(merged_master_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
     # Print the list of specific files
@@ -996,6 +1000,8 @@ def new_jobs_master_df(x):
     print('Starting with New Jobs Data')
     new_jobs_master_all_df = fetching_df('master_data','New_Jobs_Master')
     new_jobs_master_all_df['scrap_date'] = pd.to_datetime(new_jobs_master_all_df['scrap_date'],format='ISO8601')
+    max_date = max(new_jobs_master_all_df['scrap_date']).date()
+    new_jobs_master_all_df = new_jobs_master_all_df[new_jobs_master_all_df['scrap_date']!= max_date]
     max_date = max(new_jobs_master_all_df['scrap_date']).date()
     old_listing_data = pd.DataFrame()
     specific_files = data_list(x)
@@ -1131,8 +1137,9 @@ def jd_master_df(a,b):
     #last_information_updated
     till_now_jd_master = pull_jd_updated_df('master_data')
     till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'],format='ISO8601')
-    max_date = max(till_now_jd_master['scraped_date'])
-    max_date = max_date.date()
+    max_date = max(till_now_jd_master['scraped_date']).date()
+    till_now_jd_master = till_now_jd_master[till_now_jd_master['scrap_date']!= max_date]
+    max_date = max(till_now_jd_master['scrap_date']).date()
     #appending only new to old
     need_to_append = pd.DataFrame()
     list_1 = jd_data_list(a)
