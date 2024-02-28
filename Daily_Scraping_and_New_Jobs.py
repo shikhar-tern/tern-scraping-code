@@ -1138,8 +1138,8 @@ def jd_master_df(a,b):
     till_now_jd_master = pull_jd_updated_df('master_data')
     till_now_jd_master['scraped_date'] = pd.to_datetime(till_now_jd_master['scraped_date'],format='ISO8601')
     max_date = max(till_now_jd_master['scraped_date']).date()
-    till_now_jd_master = till_now_jd_master[till_now_jd_master['scrap_date']!= max_date]
-    max_date = max(till_now_jd_master['scrap_date']).date()
+    till_now_jd_master = till_now_jd_master[till_now_jd_master['scraped_date']!= max_date]
+    max_date = max(till_now_jd_master['scraped_date']).date()
     #appending only new to old
     need_to_append = pd.DataFrame()
     list_1 = jd_data_list(a)
