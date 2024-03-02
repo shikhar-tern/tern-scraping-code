@@ -1196,7 +1196,9 @@ def fixing_date(jd_master,listing_page_master):
     return jd_master,listing_page_master
 
 jd_master = fetching_df('master_data','Jobs_Information_Master')
+print("JD Master Pulled")
 listing_page_master = fetching_df('master_data','Listing_Page_Master')
+print("Listing Master Pulled")
 jd_master,listing_page_master = fixing_date(jd_master,listing_page_master)
 
 #there are two types
