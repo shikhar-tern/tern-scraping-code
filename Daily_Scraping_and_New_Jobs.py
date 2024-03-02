@@ -958,6 +958,7 @@ def listing_page_master_df(x):
     return listing_all_df
 
 listing_page_master = listing_page_master_df('listing_page_data')
+del listing_page_master
 # #### Merged Master
 
 def merged_master_df(x):
@@ -1171,7 +1172,7 @@ def jd_master_df(a,b):
     return jd_master
 
 jd_master = jd_master_df('job_information_updated','jd_page_data')
-
+del jd_master
 
 ### Update Code
 def fixing_date(jd_master,listing_page_master):
@@ -1194,6 +1195,8 @@ def fixing_date(jd_master,listing_page_master):
     print(f"Done with fixing dates")
     return jd_master,listing_page_master
 
+jd_master = fetching_df('master_data','Jobs_Information_Master')
+listing_page_master = fetching_df('master_data','Listing_Page_Master')
 jd_master,listing_page_master = fixing_date(jd_master,listing_page_master)
 
 #there are two types
