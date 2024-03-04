@@ -1270,22 +1270,16 @@ def update_information(jd_master,listing_all_df):
     start_time = time.time()
     # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
     ### Update Code
-    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'])
+    jd_master['scraped_date'] = pd.to_datetime(jd_master['scraped_date'],format='ISO8601')
     # Assuming 'closing_date' is the column with date strings
-    jd_master['date_posted'] = pd.to_datetime(
-        jd_master['date_posted'], 
-        infer_datetime_format=True, 
-        errors='coerce')
+    jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'], infer_datetime_format=True, errors='coerce')
     jd_master.drop_duplicates('short_job_link',keep='last',inplace=True)
     jd_master.reset_index(drop=True,inplace=True)
     # Convert the datetime column to the desired 'yyyy-mm-dd' format
     jd_master['date_posted'] = pd.to_datetime(jd_master['date_posted'].dt.strftime('%Y-%m-%d'))
-    listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'])
+    listing_all_df['scrap_date'] = pd.to_datetime(listing_all_df['scrap_date'],format='ISO8601')
     # Assuming 'closing_date' is the column with date strings
-    listing_all_df['closing_date'] = pd.to_datetime(
-        listing_all_df['closing_date'], 
-        infer_datetime_format=True, 
-        errors='coerce')
+    listing_all_df['closing_date'] = pd.to_datetime(listing_all_df['closing_date'], infer_datetime_format=True, errors='coerce')
     # Convert the datetime column to the desired 'yyyy-mm-dd' format
     listing_all_df['closing_date'] = pd.to_datetime(listing_all_df['closing_date'].dt.strftime('%Y-%m-%d'))
     listing_all_df.drop_duplicates(['short_job_link'],keep="last",inplace=True)
