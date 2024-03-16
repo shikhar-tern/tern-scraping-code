@@ -12,6 +12,7 @@ with open(file_path, 'r') as json_file:
 
 
 def establising_connection(x,conn_cred):
+    conn = None
     try:
         # Connect to your postgres DB
         conn = psycopg2.connect(
