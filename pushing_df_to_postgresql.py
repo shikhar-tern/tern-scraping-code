@@ -25,3 +25,5 @@ def establising_connection(x,conn_cred):
     print("Going to Close Connection")
     # Close the cursor and connection
     conn.close()
+
+establising_connection('scrappydb',conn_cred)
