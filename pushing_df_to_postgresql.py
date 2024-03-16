@@ -19,7 +19,8 @@ def establising_connection(x,conn_cred):
             user=conn_cred['user'],
             password=conn_cred['password'],
             host=conn_cred['host'],
-            port=conn_cred['port']
+            port=conn_cred['port'],
+            connect_timeout=10
         )
         # # Open a cursor to perform database operations
         # with conn.cursor() as cursor:
@@ -38,6 +39,6 @@ def establising_connection(x,conn_cred):
         # Close connection
         if conn:
             conn.close()
-            
+
 establising_connection('scrappydb',conn_cred)
 
