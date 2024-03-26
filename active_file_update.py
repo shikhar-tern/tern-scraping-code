@@ -10,6 +10,7 @@ import warnings
 from bs4 import BeautifulSoup
 import time
 import re
+import os
 import s3fs as s3
 warnings.filterwarnings('ignore')
 
@@ -192,6 +193,11 @@ def jd_master_df(a,b):
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
+def delete_files(x,j):
+    dir = '/home/ec2-user/scrape_data'
+    os.remove(dir+"/"+x+"/"+j)
+    print(f"File {j} removed from {x}")
+
 def update_information(jd_master,listing_all_df):
     start_time = time.time()
     # jd_master = pd.read_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv")
@@ -233,10 +239,12 @@ def update_information(jd_master,listing_all_df):
         'contact_person_position', 'contact_person_name',
         'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
     active_jobs_2.reset_index(drop=True,inplace=True)
-    # active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
-    # listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
+    active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
+    listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
     push_to_s3("master_data","Active_Jobs")
     push_to_s3("master_data","Latest_Updated_Master") 
+    delete_files("master_data","Active_Jobs.csv")
+    delete_files("master_data","Latest_Updated_Master.csv")
     end_time = time.time()
     duration = end_time - start_time
     print(f"Time taken to create Active Jobs: {duration/60} mintues")
