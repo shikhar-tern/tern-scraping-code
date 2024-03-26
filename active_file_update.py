@@ -185,7 +185,7 @@ def jd_master_df(a,b):
             dd = dd.drop_duplicates(['scraped_date','job_code'],keep='first').reset_index(drop=True)
             jd_master = pd.concat([jd_master,dd],axis=0,ignore_index=True)
     del jd_master['page_number']
-    jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
+    # jd_master.to_csv(r"/home/ec2-user/scrape_data/master_data/Jobs_Information_Master.csv",index=False)
     # push_to_s3("master_data","Jobs_Information_Master")
     return jd_master
 
@@ -230,8 +230,8 @@ def update_information(jd_master,listing_all_df):
         'contact_person_position', 'contact_person_name',
         'contact_person_email', 'contact_person_number','short_job_link']],on ='short_job_link',how='left')
     active_jobs_2.reset_index(drop=True,inplace=True)
-    active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
-    listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
+    # active_jobs_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs.csv",index=False)
+    # listing_all_df.to_csv(r"/home/ec2-user/scrape_data/master_data/Latest_Updated_Master.csv",index=False)
     push_to_s3("master_data","Active_Jobs")
     push_to_s3("master_data","Latest_Updated_Master") 
     end_time = time.time()
