@@ -10,6 +10,7 @@ nlp = spacy.load("en_core_web_sm")
 import numpy as np
 from difflib import get_close_matches
 import boto3
+import json
 from botocore.exceptions import ClientError
 import botocore
 import s3fs as s3
@@ -373,6 +374,11 @@ def push_to_drive():
     file_id = file['id']
     share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"/edit"
     return share_file_link
+
+# Specify the path to your JSON file
+file_path = r"/home/ec2-user/tern-scraping-code/email_credentials.json"
+with open(file_path, 'r') as json_file:
+    email_cred = json.load(json_file)
 
 #Email with Just Text
 def email_people_part_2(email_cred, x,y):
