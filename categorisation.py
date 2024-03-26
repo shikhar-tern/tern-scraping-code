@@ -448,8 +448,8 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2['Major Specialisation'].fillna("",inplace=True)
     active_jobs_final_2['Specialisation'].fillna("",inplace=True)
     active_jobs_final_2.loc[(active_jobs_final_2['Final_Tag']=='') & ((active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctor')) | active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctors')),'Final_Tag'] = 'Doctor'
-    active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
-    active_jobs_final_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv")
+    active_jobs_final_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv",index=False)
+    active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation_{}.xlsx".format(str(date.today())),index=False)
     push_to_s3('master_data','Active_Jobs_with_categorisation')
     share_file_link = push_to_drive()
     text = f"Active Jobs with categorisation and all other Files"
