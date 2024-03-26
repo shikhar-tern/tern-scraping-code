@@ -55,18 +55,21 @@ def active_inactive(x):
         return 'active'
 
 def salary_check(x):
-    x = x.replace(' to ',' ').replace(' a year','').replace('£','').replace(',','').replace(' an hour','').split(' ')
-    if len(x) == 1:
-        return [float(x[0]),float(x[0])]
-    elif len(x) == 2:
-        return [float(x[0]),float(x[1])]
-    elif len(x) == 3:
-        if x[0] == 'Depends':
-            return ['Depends on experience','Depends on experience']
-        else:
+    if x == 'Cyflog: Yn dibynnu ar brofiad':
+        return ['Depends on experience','Depends on experience']
+    else:
+        x = x.replace(' to ',' ').replace(' a year','').replace('£','').replace(',','').replace('Cyflog: ','').replace(' an hour','').strip().split(' ')
+        if len(x) == 1:
             return [float(x[0]),float(x[0])]
-    elif len(x) == 4:
-        return [float(x[0]),float(x[1])]
+        elif len(x) == 2:
+            return [float(x[0]),float(x[1])]
+        elif len(x) == 3:
+            if x[0] == 'Depends':
+                return ['Depends on experience','Depends on experience']
+            else:
+                return [float(x[0]),float(x[0])]
+        elif len(x) == 4:
+            return [float(x[0]),float(x[1])]
 
 def fixing_job_ref(code):
     if '<' in str(code):
