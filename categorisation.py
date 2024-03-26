@@ -8,12 +8,25 @@ from spacy.matcher import Matcher, PhraseMatcher
 # Load the spaCy model
 nlp = spacy.load("en_core_web_sm")
 import numpy as np
-import warnings
 from difflib import get_close_matches
 import boto3
 from botocore.exceptions import ClientError
 import botocore
 import s3fs as s3
+from googleapiclient.http import MediaFileUpload
+from google_drive_service import Create_Service
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from email.message import EmailMessage
+import ssl
+import os
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
+import warnings
 warnings.filterwarnings('ignore')
 
 def active_job_data_list(x):
@@ -329,6 +342,73 @@ def engineer_classification(x,y):
 
 active_jobs = engineer_classification(engineer_keywords,active_jobs)
 
+def push_to_s3_categorisation_file(x,y):
+    print(f'Pushing {y} to s3 bucket in {x}')
+    s3 = boto3.resource(service_name = 's3', region_name = 'eu-west-2')
+    #push to bucket
+    s3.Bucket('nhs-dataset').upload_file(Filename = f'/home/ec2-user/scrape_data/{x}/{y}.xlsx',Key = f'{x}/{y}.xlsx')
+    print(f'{y} pushed to bucket in {x}')
+
+def push_to_drive():
+    CLIENT_SECRET_FILE = 'CLIENT_SECRET_FILE.json'
+    API_NAME = 'drive'
+    API_VERSION = 'v3'
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    service = Create_Service(CLIENT_SECRET_FILE,API_NAME,API_VERSION,SCOPES)
+    folder_id = '11PyImlmzGi2FeMxhDZC8c5uA3LKxab13'
+    file_tag = 'Active_Jobs_with_categorisation'
+    file_name = f'{file_tag}_{str(date.today())}.xlsx'
+    mine_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    # Upload a file
+    file_metadata = {
+        'name': file_name,
+        'parents': [folder_id]
+    }
+    media_content = MediaFileUpload(r"/home/ec2-user/scrape_data/master_data/{}_{}.xlsx".format(file_tag,str(date.today())), mimetype=mine_type)
+    file = service.files().create(
+        body=file_metadata,
+        media_body=media_content
+    ).execute()
+    print(f"File pushed to Drive")
+    file_id = file['id']
+    share_file_link = "https://docs.google.com/spreadsheets/d/"+file_id+"/edit"
+    return share_file_link
+
+#Email with Just Text
+def email_people_part_2(email_cred, x,y):
+    # Email configuration
+    sender_email = email_cred['email']
+    sender_password = email_cred['password']
+    receiver_email = ["shikharrajput@gmail.com","safal.verma@tern-group.com","ashita@tern-group.com"]
+    subject = f"{x} Pushed to S3 on {str(date.today())}"
+    # Create the email body with a formatted table
+    body = f"""
+    <html>
+    <body>
+      <p>Hi,</p>
+      <p>{x} pushed to S3 on {str(date.today())}. {y}</p>
+      <p></p>
+    </body>
+    </html>
+    """  
+    # Create the email message
+    message = MIMEMultipart()
+    message.attach(MIMEText(body, 'html'))
+    # Set up the SSL context
+    context = ssl.create_default_context()
+    # Connect to the SMTP server and send the email
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+    with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+    print("Email sent successfully!")
+
+def delete_files(x,j):
+    dir = '/home/ec2-user/scrape_data'
+    os.remove(dir+"/"+x+"/"+j)
+    print(f"File {j} removed from {x}")
+
 def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     #final_tag
     active_jobs['Final_Tag'] = ''
@@ -370,7 +450,13 @@ def final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df):
     active_jobs_final_2.loc[(active_jobs_final_2['Final_Tag']=='') & ((active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctor')) | active_jobs_final_2['Role'].str.lower().str.strip().str.contains('doctors')),'Final_Tag'] = 'Doctor'
     active_jobs_final_2.to_excel(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.xlsx")
     active_jobs_final_2.to_csv(r"/home/ec2-user/scrape_data/master_data/Active_Jobs_with_categorisation.csv")
-    # push_to_s3('master_data','Active_Jobs_with_categorisation')
+    push_to_s3('master_data','Active_Jobs_with_categorisation')
+    share_file_link = push_to_drive()
+    text = f"Active Jobs with categorisation and all other Files"
+    text2 = f"Here is the link to the file: {share_file_link}"
+    email_people_part_2(email_cred,text,text2)
+    delete_files("master_data","Active_Jobs_with_categorisation_{}.xlsx".format(str(date.today())))
+    delete_files("master_data","Active_Jobs_with_categorisation.csv")
     return active_jobs_final_2
 
 active_jobs_final_2 = final_checks(active_jobs,final_speciality,nurse_final_speciality,ahp_df)
