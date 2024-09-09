@@ -105,77 +105,73 @@ def scrape_url(page_number, request_timeout=30):
                 soup = BeautifulSoup(response.text, 'html.parser')
 
                 # Find all ul elements with the specified class
-                ul_elements = soup.find_all('ul', class_='nhsuk-list search-results')
+                ul_elements = soup.find_all('li',class_='nhsuk-list-panel search-result nhsuk-u-padding-3')
 
                 # Iterate through the ul elements
                 for ul_element in ul_elements:
-                    # Find all li elements with the specified class and data-test attribute
-                    li_elements = ul_element.find_all('li', class_='nhsuk-list-panel search-result nhsuk-u-padding-3', attrs={'data-test': 'search-result'})
-
                     # Check if any matching li elements were found
-                    if li_elements:
+                    if ul_element:
                         # Iterate through the li elements and print their text
-                        for li_element in li_elements:
-                            #job_title
-                            try:
-                                job_title = li_element.find_all('div',class_ = 'nhsuk-grid-column-two-thirds')[0].text.strip()
-                                job_title_list.append(job_title)
-                            except:
-                                job_title_list.append('-')
+                        #job_title
+                        try:
+                            job_title = ul_element.find_all('div',class_ = 'nhsuk-grid-column-two-thirds')[0].text.strip()
+                            job_title_list.append(job_title)
+                        except:
+                            job_title_list.append('-')
 
-                            #job_title_link
-                            try:
-                                job_title_link = 'https://www.jobs.nhs.uk' + str(li_element.find('a')['href'])
-                                job_title_link_list.append(job_title_link)
-                            except:
-                                job_title_link_list.append('-')
+                        #job_title_link
+                        try:
+                            job_title_link = 'https://www.jobs.nhs.uk' + str(ul_element.find('a')['href'])
+                            job_title_link_list.append(job_title_link)
+                        except:
+                            job_title_link_list.append('-')
 
-                            #Compass
-                            try:
-                                zz = li_element.find_all('h3',class_='nhsuk-u-font-weight-bold')[0].text.strip().split('\n')
-                                new_zz = []
-                                for i in zz:
-                                    if i == '        ' or i =='       ' or i.strip() == 'Compass':
-                                        pass
-                                    else:
-                                        new_zz.append(i.strip())
-                                if len(new_zz)>1:
-                                    Compass = ' - '.join(new_zz)
+                        #Compass
+                        try:
+                            zz = ul_element.find_all('h3',class_='nhsuk-u-font-weight-bold')[0].text.strip().split('\n')
+                            new_zz = []
+                            for i in zz:
+                                if i == '        ' or i =='       ' or i.strip() == 'Compass':
+                                    pass
                                 else:
-                                    Compass = new_zz[0]
-                                compass_list.append(Compass)
-                            except:
-                                compass_list.append('-')
+                                    new_zz.append(i.strip())
+                            if len(new_zz)>1:
+                                Compass = ' - '.join(new_zz)
+                            else:
+                                Compass = new_zz[0]
+                            compass_list.append(Compass)
+                        except:
+                            compass_list.append('-')
 
-                            #Salary
-                            try:
-                                salary = li_element.find_all('li',class_='marginBt')[0].text.strip('Salary: ').replace('\n            \n','').replace('            ',' ').strip()
-                                salary_list.append(salary)
-                            except:
-                                salary_list.append('-')
+                        #Salary
+                        try:
+                            salary = ul_element.find_all('li',class_='marginBt')[0].text.strip('Salary: ').replace('\n            \n','').replace('            ',' ').strip()
+                            salary_list.append(salary)
+                        except:
+                            salary_list.append('-')
 
-                            #closing_date
-                            try:
-                                closing_date = li_element.find_all('li', attrs={'data-test': 'search-result-closingDate'})[0].text.strip().split('Closing date: ')[-1]
-                                closing_date_list.append(closing_date)
-                            except:
-                                closing_date_list.append('-')
+                        #closing_date
+                        try:
+                            closing_date = ul_element.find_all('li', attrs={'data-test': 'search-result-closingDate'})[0].text.strip().split('Closing date: ')[-1]
+                            closing_date_list.append(closing_date)
+                        except:
+                            closing_date_list.append('-')
 
-                            #contrat type
-                            try:
-                                contract_type = li_element.find_all('li', attrs={'data-test': 'search-result-jobType'})[0].text.strip().split('Contract type: ')[-1]
-                                contract_type_list.append(contract_type)
-                            except:
-                                contract_type_list.append('-')
+                        #contrat type
+                        try:
+                            contract_type = soup.find_all('li', attrs={'data-test': 'search-result-jobType'})[ul_elements.index(ul_element)].text.strip().split('Contract type: ')[-1]
+                            contract_type_list.append(contract_type)
+                        except:
+                            contract_type_list.append('-')
 
-                            #working pattern
-                            try:
-                                working_pattern = li_element.find_all('li', attrs={'data-test': 'search-result-workingPattern'})[0].text.strip().split('Working pattern: ')[-1]
-                                working_pattern_list.append(working_pattern)
-                            except:
-                                working_pattern_list.append('-')
+                        #working pattern
+                        try:
+                            working_pattern = soup.find_all('li', attrs={'data-test': 'search-result-workingPattern'})[ul_elements.index(ul_element)].text.strip().split('Working pattern: ')[-1]
+                            working_pattern_list.append(working_pattern)
+                        except:
+                            working_pattern_list.append('-')
 
-                            #                 print('-------------------------------------------------------------------------')
+                        #                 print('-------------------------------------------------------------------------')
                     else:
                         print("No matching li elements found inside the ul element.")
             else:
